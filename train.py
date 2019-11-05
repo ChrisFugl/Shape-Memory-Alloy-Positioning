@@ -1,11 +1,17 @@
 import arguments
 import configargparse
 import copy
+from environments import RealTimeEnvironment, SimulatedEnvironment
 import yaml
 
 def main():
     options = parse_arguments()
-    # TODO: start training
+    environment = get_environment(options)
+    model = train(options, environment)
+
+    # save trained model
+    if options.save_model is not None:
+        model.save(options.save_model)
 
 def parse_arguments():
     parser = configargparse.ArgParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
@@ -31,6 +37,49 @@ def parse_arguments():
             yaml.dump(vars(save_options), config_file)
 
     return options
+
+def get_environment(options):
+    if options.environment == 'real_time':
+        return RealTimeEnvironment(options)
+    else:
+        return SimulatedEnvironment(options)
+
+def train(options, environment):
+    """
+    Creates a model and trains the model according to the options and environment.
+
+    :param options: hyperparameters
+    :param environment: the environment to act in
+    :return: trained model
+    """
+    # TODO: initialize model:
+    #   * initialize value function parameters
+    #   * initialize Q-function 1 parameters
+    #   * initialize Q-function 2 parameters
+    #   * initialize policy parameters
+    #   * initialize exponential moving average of value function parameters
+    # TODO: initialize replay buffer
+
+    model = None
+    # model = Model(options)
+    # replay_buffer = ReplayBuffer(options)
+    for iteration in range(options.iterations):
+        for environment_step in range(options.environment_steps):
+            # TODO: act in envionment
+            #   * state = environment.get_state()
+            #   * action = get action from model
+            #   * next_state, reward = environment.step(action)
+            #   * add (state, action, reward, next_state) to replay buffer
+            pass
+        for gradient_step in range(options.gradient_steps):
+            # TODO: optimize neural networks based on gradients:
+            #   * update value function parameters
+            #   * update Q-function 1 parameters
+            #   * update Q-function 2 parameters
+            #   * update policy parameters
+            #   * update exponential moving average of value function parameters
+            pass
+    return model
 
 if __name__ == '__main__':
     main()

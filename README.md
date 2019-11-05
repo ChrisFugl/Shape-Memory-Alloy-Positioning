@@ -59,19 +59,19 @@ The following is proposed for how to structure the codebase. The specific API of
 **train.py**: A script that should be called from the command line to train the model. It should accept some arguments (TBD). For example the following command could be used to run a simulation:
 
 ``` sh
-python train.py --simulate
+python train.py simulated
 ```
 
 The following command could be used to train on real time date.
 
 ``` sh
-python train.py --real_time
+python train.py real_time
 ```
 
 **test.py**: A script that evaluates how well a pretrained model performs. Similarly to *train.py*, it should be possible to configure this script using command line arguments.
 
-**adapters/**: The purpose of this module is to provide an interface that *train.py* and *test.py* can use to interact with the environment. In other words: The adapters should abstract away the environment, such that the training and test script does not have to bother with whether the environment is simulated or a real time system.
+**environments/**: The purpose of this module is to provide an interface that *train.py* and *test.py* can use to interact with the environment. In other words: The environments should act as adapters, such that the training and test script does not have to bother with whether the environment is simulated or a real time system.
 
-**adapters/real_time**: An adapter for a real time system.
+**environment/real_time**: An environment for a real time system.
 
-**adapters/simulated.py**: An adapter for a simulated system. The simulation can be fairly simple. The purpose of it is to debug and test the implementation of the model without having to access the real time system.
+**environment/simulated.py**: An environment for a simulated system. The simulation can be fairly simple. The purpose of it is to debug and test the implementation of the model without having to access the real time system.
