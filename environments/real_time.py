@@ -1,21 +1,16 @@
 from environments.environment import Environment
 
 class RealTimeEnvironment(Environment):
+    """
+    Defines a real-time environment.
 
-    def __init__(self, options):
-        self.state = self.get_initial_state(options)
+    state consists of:
+        * temperature
+        * position
 
-    def step(self, action):
-        """
-        Finds the next state in the simulated environmet.
-
-        :param action: action performed in current environment
-        :return: (next state, reward)
-        """
-        next_state = self.get_next_state(action)
-        reward = self.reward(self.state, ation, next_state)
-        self.state = next_state
-        return next_state, reward
+    action consists of:
+        * voltage change
+    """
 
     def get_initial_state(self, options):
         # TODO

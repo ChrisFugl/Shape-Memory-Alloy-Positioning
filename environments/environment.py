@@ -1,4 +1,17 @@
 class Environment:
+    """
+    Base class that defines an environment. An environment should inherit from this class.
+    """
+
+    def __init__(self, options):
+        self.options = options
+        self.state = self.get_initial_state(options)
+
+    def get_initial_state(self, options):
+        raise NotImplementedError('funtion to get initial state is not implemented yet')
+
+    def get_next_state(self, action):
+        raise NotImplementedError('function to compute next state is not implemented yet')
 
     def get_state(self):
         """
@@ -15,10 +28,17 @@ class Environment:
         :param next_state: next state observed after applying action in current state
         :return: reward
         """
+        # TODO
         pass
 
     def step(self, action):
         """
-        Step function. Should be implemented by subclass.
+        Finds the next state in the simulated environmet.
+
+        :param action: action performed in current environment
+        :return: (next state, reward)
         """
-        raise NotImplementedError
+        next_state = self.get_next_state(action)
+        reward = self.reward(self.state, ation, next_state)
+        self.state = next_state
+        return next_state, reward
