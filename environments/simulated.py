@@ -47,9 +47,11 @@ class SimulatedEnvironment(Environment):
         :param action: action as 1x1 numpy.ndarray containing the temperature change
         :return: next state
         """
+        temperature, _, position = self.state
+
         # find next temperature
         temperature_change = action[0]
-        temperature_next = self.state[0] + temperature_change
+        temperature_next = temperature + temperature_change
 
         # find next displacement
         if temperature_change < 0:
@@ -58,18 +60,21 @@ class SimulatedEnvironment(Environment):
             sigma = self.get_heating_sigma(temperature_next)
         # it is a bad practice to multiply by an unanmed constant (here 55)
         # we should assign this to a variable and give it a good descriptive name
-        dislacement_next = sigma * self.optinos.max_recoverable_deflection * 55
+        displacement_next = sigma * self.options.max_recoverable_deflection * 55
 
         # find next position
         # TODO: is this correct?
-        position_next = self.state[2] * dislacement_next
+        if temperature_change < 0:
+            position_next = position + (position * displacement_next)
+        else:
+            position_next = position - (position * displacement_next)
 
         return np.array([temperature_next, displacement_next, position_next], dtype=np.float)
 
     def get_cooling_sigma(self, temperature_next):
         if temperature_next < self.options.martensitic_finish_temperature:
             return 1
-        elif T > self.options.martensitic_start_temperature:
+        elif temperature_next > self.options.martensitic_start_temperature:
             return 0
         else:
             martensite_temperature_difference = temperature_next - self.options.martensitic_start_temperature
@@ -77,15 +82,16 @@ class SimulatedEnvironment(Environment):
             cos_multiplier = cos_multiplier - self.options.martensitic_constant * martensite_temperature_difference
             sigma = 1 - self.initial_martensitic_fraction_of_twinned_martensite
             sigma = sigma / 2
-            sigma = sigma * cos(cos_ratio * cos_multiplier)
+            sigma = sigma * cos(self.martensite_cos_ratio * cos_multiplier)
             sigma = sigma + (1 + self.initial_martensitic_fraction_of_twinned_martensite) / 2
             return sigma
 
     def get_heating_sigma(self, temperature_next):
-        if temperature_next - self.options.austenitic_start_temperature < 0:
+        temperature_next_austenic_difference = temperature_next - self.options.austenitic_start_temperature
+        if temperature_next_austenic_difference < 0:
             return 1
         else:
             multiplicand = self.options.sigma_o / 2
-            multiplier = cos(pi / self.austenite_temperature_difference * (temperature_next - self.options.austenitic_finish_temperature))
+            multiplier = cos(pi / self.austenite_temperature_difference * temperature_next_austenic_difference)
             multiplier = multiplier + 1
             return multiplicand * multiplier

@@ -28,8 +28,8 @@ class Environment:
         :param next_state: next state observed after applying action in current state
         :return: reward
         """
-        # TODO
-        pass
+        # TODO: implement a reward function
+        return 1
 
     def step(self, action):
         """
@@ -39,6 +39,6 @@ class Environment:
         :return: (next state, reward)
         """
         next_state = self.get_next_state(action)
-        reward = self.reward(self.state, ation, next_state)
+        reward = self.reward(self.state, action, next_state)
         self.state = next_state
         return next_state, reward

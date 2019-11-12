@@ -34,4 +34,4 @@ def add_simulated_environment_arguments(parser):
     group.add('--delta_max', required=False, default=60 / 55, type=float, help='maximum deflection that can take place in a safe range (default 60/55)')
     group.add('--shear_stress', required=False, default=1.6 * 10 ** 9, type=float, help='shear stress (default 1.6*10^9)')
     group.add('--force_applied', required=False, default=4, type=float, help='force applied in newton (default 4)')
-    group.add('--sigma_0', required=False, default=1, type=float, help='sigma_o (default 1)')
+    group.add('--sigma_o', required=False, default=1, type=float, help='sigma_o (default 1)')
