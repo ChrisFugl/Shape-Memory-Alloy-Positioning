@@ -1,4 +1,4 @@
-from arguments import add_soft_actor_critic_arguments, add_simulated_environment_arguments
+from arguments import add_goal_arguments, add_soft_actor_critic_arguments, add_simulated_environment_arguments
 import configargparse
 import copy
 from environments import RealTimeEnvironment, SimulatedEnvironment
@@ -22,6 +22,7 @@ def parse_arguments(arguments):
     parser.add('--config', required=False, is_config_file=True, help='config file path')
     parser.add('--save_config', required=False, default=None, type=str, help='path of config file where arguments can be saved')
     parser.add('--save_model', required=False, default=None, type=str, help='path of file to save trained model')
+    add_goal_arguments(parser)
     add_soft_actor_critic_arguments(parser)
     add_simulated_environment_arguments(parser)
     options = parser.parse_args(arguments)

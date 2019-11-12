@@ -1,3 +1,7 @@
+def add_goal_arguments(parser):
+    group = parser.add_argument_group('environment goal(s)')
+    group.add('--final_position', required=False, default=0.05, type=float, help='final positio to converge towards (default 0.05)')
+
 def add_soft_actor_critic_arguments(parser):
     group = parser.add_argument_group('soft actor-critic arguments')
     group.add('--iterations', required=False, default=100000, type=int, help='number of iterations (default 100,000)')

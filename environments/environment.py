@@ -1,3 +1,6 @@
+from math import exp
+from scipy.spatial import distance
+
 class Environment:
     """
     Base class that defines an environment. An environment should inherit from this class.
@@ -28,8 +31,11 @@ class Environment:
         :param next_state: next state observed after applying action in current state
         :return: reward
         """
-        # TODO: implement a reward function
-        return 1
+        # TODO: include speed towards goal position?
+        _, _, position_next = next_state
+        position_goal_distance = distance.euclidean([position_next], [self.options.final_position])
+        position_goal_similarity = exp(- position_goal_distance)
+        return position_goal_similarity
 
     def step(self, action):
         """
