@@ -91,3 +91,6 @@ class SimulatedEnvironment(Environment):
             multiplier = cos(pi / self.austenite_temperature_difference * temperature_next_austenic_difference)
             multiplier = multiplier + 1
             return multiplicand * multiplier
+
+    def is_terminal_state(self):
+        return False

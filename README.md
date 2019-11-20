@@ -79,6 +79,8 @@ python train.py real_time
 
 **app/network.py**: The neural network used by the model should be implemented here.
 
+**app/rollout.py**: Explores the environment and returns trajectories from the exploration.
+
 **app/replay_buffer.py**: Store used to store samples.
 
 **app/environments/**: The purpose of this module is to provide an interface that *train.py* and *test.py* can use to interact with the environment. In other words: The environments should act as adapters, such that the training and test script does not have to bother with whether the environment is simulated or a real time system.
@@ -86,3 +88,9 @@ python train.py real_time
 **app/environment/real_time**: An environment for a real time system.
 
 **app/environment/simulated.py**: An environment for a simulated system. The simulation can be fairly simple. The purpose of it is to debug and test the implementation of the model without having to access the real time system.
+
+**app/environment/test.py**: Very simple environment that is only used for unit testing.
+
+**app/policies/**: Different policies. (A policy is used to compute an action given a state.)
+
+**app/policies/test**: Policy that should only be used for unit testing purposes.

@@ -22,6 +22,12 @@ class Environment:
         """
         return self.state
 
+    def is_terminal_state(self):
+        """
+        :return: boolean whether current state is the terminal state
+        """
+        raise NotImplementedError('function to compute if the current state is a terminal state is not implemented yet')
+
     def reward(self, state, action, next_state):
         """
         Reward function.
@@ -46,5 +52,6 @@ class Environment:
         """
         next_state = self.get_next_state(action)
         reward = self.reward(self.state, action, next_state)
+        terminal = self.is_terminal_state()
         self.state = next_state
-        return next_state, reward
+        return next_state, reward, terminal

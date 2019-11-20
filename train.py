@@ -70,9 +70,9 @@ def train(options, environment):
         for environment_step in range(options.environment_steps):
             # TODO: act in envionment
             #   * state = environment.get_state()
-            #   * action = get action from model
-            #   * next_state, reward = environment.step(action)
-            #   * add (state, action, reward, next_state) to replay buffer
+            #   * action = model.get_action(state)
+            #   * next_state, reward, terminal = environment.step(action)
+            #   * replay_buffer.add_sample(state, next_state, action, reward, terminal)
             pass
         for gradient_step in range(options.gradient_steps):
             # TODO: optimize neural networks based on gradients:
