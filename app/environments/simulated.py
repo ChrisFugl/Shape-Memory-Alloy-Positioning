@@ -1,4 +1,4 @@
-from environments.environment import Environment
+from app.environments.environment import Environment
 from math import cos, pi
 import numpy as np
 
@@ -42,7 +42,7 @@ class SimulatedEnvironment(Environment):
 
     def get_next_state(self, action):
         """
-        Estimates next state in simulated environment.
+        Estimates next state in the simulated environment.
 
         :param action: action as 1x1 numpy.ndarray containing the temperature change
         :return: next state
@@ -63,11 +63,7 @@ class SimulatedEnvironment(Environment):
         displacement_next = sigma * self.options.max_recoverable_deflection * 55
 
         # find next position
-        # TODO: is this correct?
-        if temperature_change < 0:
-            position_next = position + (position * displacement_next)
-        else:
-            position_next = position - (position * displacement_next)
+        position_next = position * displacement_next
 
         return np.array([temperature_next, displacement_next, position_next], dtype=np.float)
 

@@ -1,4 +1,4 @@
-from environments.environment import Environment
+from app.environments.environment import Environment
 
 class RealTimeEnvironment(Environment):
     """

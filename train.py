@@ -1,7 +1,7 @@
-from arguments import add_goal_arguments, add_soft_actor_critic_arguments, add_simulated_environment_arguments
+from app.arguments import add_goal_arguments, add_soft_actor_critic_arguments, add_simulated_environment_arguments
+from app.environments import RealTimeEnvironment, SimulatedEnvironment
 import configargparse
 import copy
-from environments import RealTimeEnvironment, SimulatedEnvironment
 import sys
 import yaml
 
