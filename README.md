@@ -49,6 +49,13 @@ You are now up an running with the virtual environment. Run the following comman
 deactivate
 ```
 
+## Tests
+All tests are located in the *tests* directory. Use the following command to run all tests:
+
+``` sh
+python -m unittest discover -s tests
+```
+
 ## Structure
 The code is structured as follows:
 
@@ -71,6 +78,8 @@ python train.py real_time
 **app/model.py**: The Soft Actor-Critic model should be implemented in this file.
 
 **app/network.py**: The neural network used by the model should be implemented here.
+
+**app/replay_buffer.py**: Store used to store samples.
 
 **app/environments/**: The purpose of this module is to provide an interface that *train.py* and *test.py* can use to interact with the environment. In other words: The environments should act as adapters, such that the training and test script does not have to bother with whether the environment is simulated or a real time system.
 
