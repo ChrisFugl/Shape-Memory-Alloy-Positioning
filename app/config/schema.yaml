@@ -1,0 +1,67 @@
+batch_size: int(min=1, required=False)
+environment: any(
+  include('environment_simulated'),
+  include('environment_test'))
+environment_steps: int(required=False)
+gradient_steps: int(required=False)
+iterations: int(required=False)
+max_buffer_size: int(min=1, required=False)
+max_trajectory_length: int(min=1, required=False)
+model: include('model')
+policy: any(
+  include('policy_gaussian'),
+  include('policy_test'))
+save_model: str(required=False)
+---
+environment_simulated:
+  type: enum('simulated')
+  final_position: num(min=0, required=True)
+  initial_deflection: num(required=False)
+  initial_force: num(required=False)
+  initial_martensitic_fraction_of_detwinned_martensite: num(required=False)
+  initial_position: num(required=False)
+  initial_temperature: num(required=False)
+  number_of_coils: num(required=False)
+  spring_diameter: num(required=False)
+  wire_diameter: num(required=False)
+  twinned_martensite_shear_modulus: num(required=False)
+  austenite_shear_modulus: num(required=False)
+  austenitic_start_temperature: num(required=False)
+  austenitic_finish_temperature: num(required=False)
+  austenitic_constant: num(required=False)
+  martensitic_start_temperature: num(required=False)
+  martensitic_finish_temperature: num(required=False)
+  martensitic_constant: num(required=False)
+  max_recoverable_deflection: num(required=False)
+  critical_detwinning_starting_stress: num(required=False)
+  critical_detwinning_finishing_stress: num(required=False)
+  delta_max: num(required=False)
+  shear_stress: num(required=False)
+  force_applied: num(required=False)
+  sigma_o: num(required=False)
+---
+environment_test:
+  type: enum('test')
+  initial_state: num(required=True)
+  final_state: num(required=True)
+---
+model:
+  discount_factor: num(required=False)
+  exponential_weight: num(required=False)
+  learning_rate_policy: num(required=False)
+  learning_rate_q: num(required=False)
+  network: include('network')
+  reward_scale: num(min=0, required=False)
+  temperature: num(min=0, required=False)
+---
+network:
+  hidden_size: int(min=1, required=False)
+  number_of_hidden_layers: int(min=1, required=False)
+---
+policy_gaussian:
+  type: enum('gaussian')
+  network: include('network')
+---
+policy_test:
+  type: enum('test')
+  change: int(required=True)

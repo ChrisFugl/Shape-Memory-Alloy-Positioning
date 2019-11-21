@@ -10,19 +10,27 @@ class TestEnvironment(Environment):
     action: 1D ndarray of size 1
     """
 
-    def __init__(self, initial_state, final_state):
-        self.initial_state = initial_state
-        self.final_state = final_state
-        super(TestEnvironment, self).__init__(None)
+    def __init__(self, config):
+        """
+        :type config: app.config.environments.TestEnvironmentConfig
+        """
+        self.initial_state = config.initial_state
+        self.final_state = config.final_state
+        self.config = config
+        super(TestEnvironment, self).__init__(config)
 
-    def get_initial_state(self, options):
+    def get_initial_state(self):
         return np.array([self.initial_state])
 
     def get_next_state(self, action):
         return self.state + action[0]
 
-    def is_terminal_state(self):
-        return self.state[0] == self.final_state
+    def is_terminal_state(self, state):
+        return state[0] == self.final_state
+
+    def reset(self):
+        # TODO
+        pass
 
     def reward(self, state, action, next_state):
         distance_next = abs(self.final_state - next_state[0])

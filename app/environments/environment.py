@@ -1,16 +1,17 @@
-from math import exp
-from scipy.spatial import distance
-
 class Environment:
     """
     Base class that defines an environment. An environment should inherit from this class.
     """
 
-    def __init__(self, options):
-        self.options = options
-        self.state = self.get_initial_state(options)
+    def __init__(self, config):
+        """
+        :type config: app.config.environments.EnvironmentConfig
+        """
+        self.action_size = config.action_size
+        self.observation_size = config.observation_size
+        self.state = self.get_initial_state()
 
-    def get_initial_state(self, options):
+    def get_initial_state(self):
         raise NotImplementedError('funtion to get initial state is not implemented yet')
 
     def get_next_state(self, action):
@@ -22,26 +23,20 @@ class Environment:
         """
         return self.state
 
-    def is_terminal_state(self):
+    def is_terminal_state(self, state):
         """
         :return: boolean whether current state is the terminal state
         """
         raise NotImplementedError('function to compute if the current state is a terminal state is not implemented yet')
 
+    def reset(self):
+        raise NotImplementedError('reset method should be implemented by subclass')
+
     def reward(self, state, action, next_state):
         """
-        Reward function.
-
-        :param state: current state
-        :param action: action performed by the policy
-        :param next_state: next state observed after applying action in current state
-        :return: reward
+        :return: the reward from taking an action in a given state
         """
-        # TODO: include speed towards goal position?
-        _, _, position_next = next_state
-        position_goal_distance = distance.euclidean([position_next], [self.options.final_position])
-        position_goal_similarity = exp(- position_goal_distance)
-        return position_goal_similarity
+        raise NotImplementedError('the reward function should be implemented by the subclass')
 
     def step(self, action):
         """
@@ -52,6 +47,6 @@ class Environment:
         """
         next_state = self.get_next_state(action)
         reward = self.reward(self.state, action, next_state)
-        terminal = self.is_terminal_state()
+        terminal = self.is_terminal_state(next_state)
         self.state = next_state
         return next_state, reward, terminal

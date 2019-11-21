@@ -1,11 +1,11 @@
 from collections import namedtuple
 
 Batch = namedtuple('Batch', [
-    'observation',
-    'next_observation',
-    'action',
-    'reward',
-    'terminal'
+    'observations',
+    'next_observations',
+    'actions',
+    'rewards',
+    'terminals'
 ])
 
 Trajectory = namedtuple('Trajectory', [

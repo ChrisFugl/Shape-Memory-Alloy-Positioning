@@ -1,0 +1,48 @@
+batch_size: 256
+environment:
+  type: simulated
+  austenite_shear_modulus: 100000000000
+  austenitic_constant: 100000000
+  austenitic_finish_temperature: 71
+  austenitic_start_temperature: 59
+  critical_detwinning_finishing_stress: 1020000000.0
+  critical_detwinning_starting_stress: 500000000.0
+  delta_max: 1.0909090909090908
+  final_position: 0.15
+  force_applied: 4
+  initial_deflection: 0
+  initial_force: 0
+  initial_martensitic_fraction_of_detwinned_martensite: 1
+  initial_position: 0.12
+  initial_temperature: 20
+  martensitic_constant: 40000000
+  martensitic_finish_temperature: 43
+  martensitic_start_temperature: 55
+  max_recoverable_deflection: 0.001
+  number_of_coils: 55
+  shear_stress: 1600000000.0
+  sigma_o: 1
+  spring_diameter: 0.0025
+  twinned_martensite_shear_modulus: 50000000000
+  wire_diameter: 0.0005
+environment_steps: 10
+gradient_steps: 1
+iterations: 100000
+max_buffer_size: 100000
+max_trajectory_length: 30
+model:
+  discount_factor: 0.99
+  exponential_weight: 0.005
+  learning_rate_policy: 0.0001
+  learning_rate_q: 0.0001
+  network:
+    hidden_size: 32
+    number_of_hidden_layers: 2
+  reward_scale: 3.0
+  temperature: 0.1
+policy:
+  type: gaussian
+  network:
+    hidden_size: 32
+    number_of_hidden_layers: 2
+save_model: null

@@ -5,9 +5,13 @@ class TestPolicy(Policy):
     Policy that should only be used for testing purposes.
     """
 
-    def __init__(self, change=0):
+    def __init__(self, config, envionment):
+        """
+        :type config: app.config.policies.TestPolicyConfig
+        :type environment: app.config.environments.EnvironmentConfig
+        """
         super(TestPolicy, self).__init__()
-        self.change = change
+        self.change = config.change
 
     def set_change(self, change):
         self.change = change

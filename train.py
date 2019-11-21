@@ -1,88 +1,70 @@
-from app.arguments import add_goal_arguments, add_soft_actor_critic_arguments, add_simulated_environment_arguments
-from app.environments import RealTimeEnvironment, SimulatedEnvironment
-import configargparse
-import copy
+from app.config import Config
+from app.environments import get_environment
+from app.model import Model
+from app.policies import get_policy
+from app.replay_buffer import ReplayBuffer
+from app.rollout import rollouts
+import argparse
+import torch
 import sys
 import yaml
+import yamale
+
+CONFIG_SCHEMA_PATH = 'app/config/schema.yaml'
 
 def main():
     arguments = sys.argv[1:]
     options = parse_arguments(arguments)
-    environment = get_environment(options)
-    model = train(options, environment)
+    config = load_config(options.config)
+    environment = get_environment(config.environment_type, config.environment)
+    policy = get_policy(config.policy_type, config.policy, environment)
+    replay_buffer = ReplayBuffer(config.batch_size, config.max_buffer_size, environment.observation_size, environment.action_size)
+    model = Model(config.model, environment, policy)
+    train(model, replay_buffer, environment, config)
 
     # save trained model
-    if options.save_model is not None:
+    if config.save_model is not None:
         model.save(options.save_model)
 
 def parse_arguments(arguments):
-    parser = configargparse.ArgParser(config_file_parser_class=configargparse.YAMLConfigFileParser)
-    parser.add('environment', choices=['real_time', 'simulated'], help='which environment to use')
-
-    parser.add('--config', required=False, is_config_file=True, help='config file path')
-    parser.add('--save_config', required=False, default=None, type=str, help='path of config file where arguments can be saved')
-    parser.add('--save_model', required=False, default=None, type=str, help='path of file to save trained model')
-    add_goal_arguments(parser)
-    add_soft_actor_critic_arguments(parser)
-    add_simulated_environment_arguments(parser)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config', type=str, help='path to config file')
     options = parser.parse_args(arguments)
-
-    # remove keys that should not be saved to config file
-    save_options = copy.deepcopy(options)
-    save_config = options.save_config
-    del save_options.environment
-    del save_options.config
-    del save_options.save_config
-
-    # save config file
-    if save_config is not None:
-        with open(save_config, 'w') as config_file:
-            yaml.dump(vars(save_options), config_file)
-
     return options
 
-def get_environment(options):
-    if options.environment == 'real_time':
-        return RealTimeEnvironment(options)
-    else:
-        return SimulatedEnvironment(options)
+def load_config(config_path):
+    schema = yamale.make_schema(CONFIG_SCHEMA_PATH)
+    data = yamale.make_data(config_path)
+    yamale.validate(schema, data, strict=True)
+    config = Config(**data[0][0])
+    return config
 
-def train(options, environment):
+def train(model, replay_buffer, environment, config):
     """
-    Creates a model and trains the model according to the options and environment.
+    Trains the model according to the configuration and environment.
 
-    :param options: hyperparameters
-    :param environment: the environment to act in
-    :return: trained model
+    :type model: app.model.Model
+    :type replay_buffer: app.replay_buffer.ReplayBuffer
+    :type environment: app.environments.environment.Environment
+    :type config: app.config.Config
     """
-    # TODO: initialize model:
-    #   * initialize value function parameters
-    #   * initialize Q-function 1 parameters
-    #   * initialize Q-function 2 parameters
-    #   * initialize policy parameters
-    #   * initialize exponential moving average of value function parameters
-    # TODO: initialize replay buffer
+    for iteration in range(config.iterations):
+        # explore environment
+        trajectories  = rollouts(environment, model.policy, config.environment_steps, max_trajectory_length=config.max_trajectory_length)
+        replay_buffer.add_trajectories(trajectories)
 
-    model = None
-    # model = Model(options)
-    # replay_buffer = ReplayBuffer(options)
-    for iteration in range(options.iterations):
-        for environment_step in range(options.environment_steps):
-            # TODO: act in envionment
-            #   * state = environment.get_state()
-            #   * action = model.get_action(state)
-            #   * next_state, reward, terminal = environment.step(action)
-            #   * replay_buffer.add_sample(state, next_state, action, reward, terminal)
-            pass
-        for gradient_step in range(options.gradient_steps):
-            # TODO: optimize neural networks based on gradients:
-            #   * update value function parameters
-            #   * update Q-function 1 parameters
-            #   * update Q-function 2 parameters
-            #   * update policy parameters
-            #   * update exponential moving average of value function parameters
-            pass
-    return model
+        # train model
+        for gradient_step in range(config.gradient_steps):
+            batch_numpy = replay_buffer.random_batch()
+            policy_loss, q1_loss, q2_loss = model.train_batch(
+                observations=torch.from_numpy(batch_numpy.observations).float(),
+                next_observations=torch.from_numpy(batch_numpy.next_observations).float(),
+                actions=torch.from_numpy(batch_numpy.actions).float(),
+                rewards=torch.from_numpy(batch_numpy.rewards).float(),
+                terminals=torch.from_numpy(batch_numpy.terminals).float()
+            )
+
+        # TODO: log performance to tensorboard
 
 if __name__ == '__main__':
     main()

@@ -3,26 +3,25 @@ import numpy as np
 
 class ReplayBuffer:
 
-    def __init__(self, options):
+    def __init__(self, batch_size, max_buffer_size, observation_size, action_size):
         """
         Creates a replay buffer for storing and sampling observed samples.
 
-        :param options: a named tuple which should contain at least the following keys:
-            * max_buffer_size
-            * observation_size
-            * action_size
-            * batch_size
+        :type batch_size: int
+        :type max_buffer_size: int
+        :type observation_size: int
+        :type action_size: int
         """
-        self.max_buffer_size = options.max_buffer_size
-        self.observation_size = options.observation_size
-        self.action_size = options.action_size
-        self.batch_size = options.batch_size
+        self.max_buffer_size = max_buffer_size
+        self.observation_size = observation_size
+        self.action_size = action_size
+        self.batch_size = batch_size
 
-        self.observations = np.zeros((options.max_buffer_size, options.observation_size), dtype=np.float64)
-        self.next_observations = np.zeros((options.max_buffer_size, options.observation_size), dtype=np.float64)
-        self.actions = np.zeros((options.max_buffer_size, options.action_size), dtype=np.float64)
-        self.rewards = np.zeros((options.max_buffer_size, 1), dtype=np.float64)
-        self.terminals = np.zeros((options.max_buffer_size, 1), dtype=np.uint8)
+        self.observations = np.zeros((max_buffer_size, observation_size), dtype=np.float64)
+        self.next_observations = np.zeros((max_buffer_size, observation_size), dtype=np.float64)
+        self.actions = np.zeros((max_buffer_size, action_size), dtype=np.float64)
+        self.rewards = np.zeros((max_buffer_size, 1), dtype=np.float64)
+        self.terminals = np.zeros((max_buffer_size, 1), dtype=np.uint8)
 
         self.top = 0
         self.buffer_size = 0
@@ -77,9 +76,9 @@ class ReplayBuffer:
     def random_batch(self):
         indices = np.random.randint(0, self.buffer_size, self.batch_size)
         return Batch(
-            observation=self.observations[indices],
-            next_observation=self.next_observations[indices],
-            action=self.actions[indices],
-            reward=self.rewards[indices],
-            terminal=self.terminals[indices],
+            observations=self.observations[indices],
+            next_observations=self.next_observations[indices],
+            actions=self.actions[indices],
+            rewards=self.rewards[indices],
+            terminals=self.terminals[indices],
         )

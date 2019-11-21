@@ -49,6 +49,13 @@ You are now up an running with the virtual environment. Run the following comman
 deactivate
 ```
 
+## Usage
+Two main scripts can be used to train and test the model. Use the configuration files in *config/* to specify how to configure the model, environment, and more. For example:
+
+``` sh
+python train.py configs/simulated.yaml
+```
+
 ## Tests
 All tests are located in the *tests* directory. Use the following command to run all tests:
 
@@ -56,41 +63,5 @@ All tests are located in the *tests* directory. Use the following command to run
 python -m unittest discover -s tests
 ```
 
-## Structure
-The code is structured as follows:
-
-**train.py**: A script that should be called from the command line to train the model. It should accept some arguments (TBD). For example the following command could be used to run a simulation:
-
-``` sh
-python train.py simulated
-```
-
-The following command could be used to train on real time date.
-
-``` sh
-python train.py real_time
-```
-
-**test.py**: A script that evaluates how well a pretrained model performs. Similarly to *train.py*, it should be possible to configure this script using command line arguments.
-
-**app/**: All code related to the model and environments.
-
-**app/model.py**: The Soft Actor-Critic model should be implemented in this file.
-
-**app/network.py**: The neural network used by the model should be implemented here.
-
-**app/rollout.py**: Explores the environment and returns trajectories from the exploration.
-
-**app/replay_buffer.py**: Store used to store samples.
-
-**app/environments/**: The purpose of this module is to provide an interface that *train.py* and *test.py* can use to interact with the environment. In other words: The environments should act as adapters, such that the training and test script does not have to bother with whether the environment is simulated or a real time system.
-
-**app/environment/real_time**: An environment for a real time system.
-
-**app/environment/simulated.py**: An environment for a simulated system. The simulation can be fairly simple. The purpose of it is to debug and test the implementation of the model without having to access the real time system.
-
-**app/environment/test.py**: Very simple environment that is only used for unit testing.
-
-**app/policies/**: Different policies. (A policy is used to compute an action given a state.)
-
-**app/policies/test**: Policy that should only be used for unit testing purposes.
+## Acknowledgement
+The implementation of Soft Actor-Critic is based of [the implementation by Vitchyr Pong](https://github.com/vitchyr/rlkit).

@@ -1,7 +1,12 @@
-class Policy:
+from torch import nn
+
+class Policy(nn.Module):
     """
-    Base policy defines the interface that all policies must use.
+    Base policy that defines the interface that all policies must use.
     """
+
+    def __init__(self):
+        super(Policy, self).__init__()
 
     def get_action(self, state):
         """
