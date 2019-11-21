@@ -1,8 +1,9 @@
-from app.config.environments import RealTimeEnvironmentConfig, SimulatedEnvironmentConfig, TestEnvironmentConfig
+from app.config.environments import DebugEnvironmentConfig, RealTimeEnvironmentConfig, SimulatedEnvironmentConfig, TestEnvironmentConfig
 from app.config.policies import GaussianPolicyConfig, TestPolicyConfig
 from app.config.model import ModelConfig
 
 _environment_classes = {
+    'debug': DebugEnvironmentConfig,
     'real_time': RealTimeEnvironmentConfig,
     'simulated': SimulatedEnvironmentConfig,
     'test': TestEnvironmentConfig

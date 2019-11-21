@@ -18,9 +18,10 @@ class Model:
         q_input_size = environment.observation_size + environment.action_size
         hidden_size = config.network.hidden_size
         number_of_hidden_layers = config.network.number_of_hidden_layers
+        self.target_entropy = -1
+        self.log_alpha = torch.zeros(1, requires_grad=True)
         self.policy = policy
         self.reward_scale = config.reward_scale
-        self.temperature = config.temperature
         self.discount_factor = config.discount_factor
         self.exponential_weight = config.exponential_weight
         self.q1 = Network(q_input_size, hidden_size, q_output_size, number_of_hidden_layers, nn.ReLU())
@@ -28,6 +29,7 @@ class Model:
         self.target_q1 = Network(q_input_size, hidden_size, q_output_size, number_of_hidden_layers, nn.ReLU())
         self.target_q2 = Network(q_input_size, hidden_size, q_output_size, number_of_hidden_layers, nn.ReLU())
         self.q_criterion = nn.MSELoss()
+        self.alpha_optimizer = optim.Adam([self.log_alpha], lr=config.learning_rate_policy)
         self.policy_optimizer = optim.Adam(policy.parameters(), lr=config.learning_rate_policy)
         self.q1_optimizer = optim.Adam(self.q1.parameters(), lr=config.learning_rate_q)
         self.q2_optimizer = optim.Adam(self.q2.parameters(), lr=config.learning_rate_q)
@@ -37,8 +39,12 @@ class Model:
         Forward pass.
         Assumes inputs are torch tensors.
         """
-        # actions from current policy
         policy_actions, policy_log_probability = self.policy(observations)
+
+        alpha_loss = - (self.log_alpha * (policy_log_probability + self.target_entropy).detach()).mean()
+        self.optimize(self.alpha_optimizer, alpha_loss)
+        alpha = self.log_alpha.exp()
+
         policy_next_actions, policy_next_log_probability = self.policy(next_observations)
 
         # concatenate observations and corresponding actions
@@ -56,12 +62,12 @@ class Model:
         # target q-values
         target_q1 = self.target_q1(next_observation_policy_next_actions)
         target_q2 = self.target_q2(next_observation_policy_next_actions)
-        target_q = torch.min(target_q1, target_q2) - self.temperature * policy_next_log_probability
+        target_q = torch.min(target_q1, target_q2) - alpha * policy_next_log_probability
         q_target = self.reward_scale * rewards * (1.0 - terminals) * self.discount_factor * target_q
         q_target_detached = q_target.detach()
 
         # losses
-        policy_loss = torch.mean(self.temperature * policy_log_probability - q_policy_actions)
+        policy_loss = (alpha * policy_log_probability - q_policy_actions).mean()
         q1_loss = self.q_criterion(q1_actions, q_target_detached)
         q2_loss = self.q_criterion(q2_actions, q_target_detached)
 
@@ -92,6 +98,18 @@ class Model:
             target_contribution = target_param.data * (1.0 - self.exponential_weight)
             new_target_param = target_contribution + q_contribution
             target_param.data.copy_(new_target_param)
+
+    def eval_mode(self):
+        self.policy.eval()
+        self.q1.eval()
+        self.q2.eval()
+
+    def train_mode(self):
+        self.policy.train()
+        self.q1.train()
+        self.q2.train()
+        self.target_q1.train()
+        self.target_q2.train()
 
     def load(self, path):
         raise NotImplementedError('model.load is not implemented yet')

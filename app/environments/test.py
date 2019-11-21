@@ -23,7 +23,7 @@ class TestEnvironment(Environment):
         return np.array([self.initial_state])
 
     def get_next_state(self, action):
-        return self.state + action[0]
+        return self.state + action
 
     def is_terminal_state(self, state):
         return state[0] == self.final_state

@@ -1,5 +1,6 @@
 batch_size: int(min=1, required=False)
 environment: any(
+  include('environment_debug'),
   include('environment_simulated'),
   include('environment_test'))
 environment_steps: int(required=False)
@@ -12,6 +13,12 @@ policy: any(
   include('policy_gaussian'),
   include('policy_test'))
 save_model: str(required=False)
+---
+environment_debug:
+  type: enum('debug')
+  goal_position: num(required=False)
+  min_start_position: num(required=False)
+  max_start_position: num(required=False)
 ---
 environment_simulated:
   type: enum('simulated')
@@ -52,7 +59,6 @@ model:
   learning_rate_q: num(required=False)
   network: include('network')
   reward_scale: num(min=0, required=False)
-  temperature: num(min=0, required=False)
 ---
 network:
   hidden_size: int(min=1, required=False)

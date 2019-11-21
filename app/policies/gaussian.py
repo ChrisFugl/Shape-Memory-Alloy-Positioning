@@ -62,6 +62,7 @@ class GaussianPolicy(Policy):
         else:
             sample = gaussian.sample()
             action = mean + std * sample
+            action.requires_grad_()
 
         log_probability = gaussian.log_prob(action)
 

@@ -39,7 +39,6 @@ model:
     hidden_size: 32
     number_of_hidden_layers: 2
   reward_scale: 3.0
-  temperature: 0.1
 policy:
   type: gaussian
   network:

@@ -1,8 +1,10 @@
+from app.environments.debug import DebugEnvironment
 from app.environments.real_time import RealTimeEnvironment
 from app.environments.simulated import SimulatedEnvironment
 from app.environments.test import TestEnvironment
 
 _environment_classes = {
+    'debug': DebugEnvironment,
     'real_time': RealTimeEnvironment,
     'simulated': SimulatedEnvironment,
     'test': TestEnvironment

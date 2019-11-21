@@ -8,8 +8,7 @@ class ModelConfig:
         learning_rate_policy=0.0001,
         learning_rate_q=0.0001,
         network,
-        reward_scale=1.0,
-        temperature=0.
+        reward_scale=1.0
     ):
         self.discount_factor = discount_factor
         self.exponential_weight = exponential_weight
@@ -17,7 +16,6 @@ class ModelConfig:
         self.learning_rate_q = learning_rate_q
         self.network = NetworkConfig(**network)
         self.reward_scale = reward_scale
-        self.temperature = temperature
 
     def __str__(self):
         return (f'Model(\n'
