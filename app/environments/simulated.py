@@ -24,6 +24,7 @@ class SimulatedEnvironment(Environment):
         """
         :type config: app.config.environments.SimulatedEnvironmentConfig
         """
+        super(SimulatedEnvironment, self).__init__(config)
         spring_constant = config.spring_diameter / config.wire_diameter
         wahls_correction = (4 * spring_constant - 1) / (4 * spring_constant - 4) + (0.615 / spring_constant)
         shear_stress_corrected = config.shear_stress * wahls_correction
@@ -37,7 +38,7 @@ class SimulatedEnvironment(Environment):
         self.martensite_cos_ratio = pi / critical_detwinning_stress_difference
         self.austenite_temperature_difference = config.austenitic_finish_temperature - config.austenitic_start_temperature
         self.config = config
-        super(SimulatedEnvironment, self).__init__(config)
+        self.state = self.get_initial_state()
 
     def get_initial_state(self):
         return [
@@ -75,6 +76,9 @@ class SimulatedEnvironment(Environment):
 
         # return np.array([temperature_next, displacement_next, position_next], dtype=np.float)
         return np.array([temperature_next, next_temperature_change, displacement_next], dtype=np.float)
+
+    def get_state(self):
+        return self.state
 
     def get_cooling_sigma(self, temperature_next):
         if temperature_next < self.config.martensitic_finish_temperature:
@@ -125,3 +129,16 @@ class SimulatedEnvironment(Environment):
         next_goal_similarity = exp(- next_goal_distance)
         # return (next_goal_distance - goal_distance) * next_goal_similarity
         return next_goal_similarity
+
+    def step(self, action):
+        """
+        Finds the next state in the simulated environmet.
+
+        :param action: action performed in current environment
+        :return: (next state, reward)
+        """
+        next_state = self.get_next_state(action)
+        reward = self.reward(self.state, action, next_state)
+        terminal = self.is_terminal_state(next_state)
+        self.state = next_state
+        return next_state, reward, terminal

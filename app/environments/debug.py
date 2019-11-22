@@ -12,9 +12,9 @@ class DebugEnvironment(Environment):
         """
         :type config: app.config.environments.DebugEnvironmentConfig
         """
+        super(DebugEnvironment, self).__init__(config)
         self.config = config
         self.epsilon = 10 ** -9
-        super(DebugEnvironment, self).__init__(config)
 
     def get_initial_state(self):
         min_position = self.config.min_start_position
@@ -24,6 +24,9 @@ class DebugEnvironment(Environment):
 
     def get_next_state(self, action):
         return self.state + action
+
+    def get_state(self):
+        return self.state
 
     def is_terminal_state(self, state):
         return abs(state[0] - self.config.goal_position) < self.epsilon
@@ -35,3 +38,16 @@ class DebugEnvironment(Environment):
         distance_to_goal = abs(next_state[0] - self.config.goal_position)
         similarity_to_goal = exp(-distance_to_goal)
         return similarity_to_goal
+
+    def step(self, action):
+        """
+        Finds the next state in the simulated environmet.
+
+        :param action: action performed in current environment
+        :return: (next state, reward)
+        """
+        next_state = self.get_next_state(action)
+        reward = self.reward(self.state, action, next_state)
+        terminal = self.is_terminal_state(next_state)
+        self.state = next_state
+        return next_state, reward, terminal

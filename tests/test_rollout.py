@@ -55,11 +55,11 @@ class TestRollout(unittest.TestCase):
             terminals=np.array([0])
         )
         expected_trajectory2 = Trajectory(
-            observations=np.array([[1]]),
-            next_observations=np.array([[2]]),
+            observations=np.array([[0]]),
+            next_observations=np.array([[1]]),
             actions=np.array([[1]]),
             rewards=np.array([1]),
-            terminals=np.array([1])
+            terminals=np.array([0])
         )
         np.testing.assert_array_equal(trajectories[0].observations, expected_trajectory1.observations)
         np.testing.assert_array_equal(trajectories[0].next_observations, expected_trajectory1.next_observations)

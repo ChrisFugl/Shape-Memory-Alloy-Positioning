@@ -1,6 +1,7 @@
 batch_size: int(min=1, required=False)
 environment: any(
   include('environment_debug'),
+  include('environment_real_time'),
   include('environment_simulated'),
   include('environment_test'))
 environment_steps: int(required=False)
@@ -19,6 +20,16 @@ environment_debug:
   goal_position: num(required=False)
   min_start_position: num(required=False)
   max_start_position: num(required=False)
+---
+environment_real_time:
+  type: enum('real_time')
+  action_decimal_precision: int(min=1, required=True)
+  action_digit_precision: int(min=1, required=True)
+  bytes_per_value: int(min=1, required=True)
+  host: str(required=True)
+  port_read: int(min=1, required=True)
+  port_write: int(min=1, required=True)
+  values_per_observation: int(int=1, required=True)
 ---
 environment_simulated:
   type: enum('simulated')

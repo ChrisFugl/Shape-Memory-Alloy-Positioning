@@ -19,10 +19,25 @@ class DebugEnvironmentConfig(EnvironmentConfig):
 
 class RealTimeEnvironmentConfig(EnvironmentConfig):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *,
+        action_decimal_precision,
+        action_digit_precision,
+        bytes_per_value,
+        host,
+        port_read,
+        port_write,
+        values_per_observation
+    ):
         action_size = 1
         observation_size = 3
         super(RealTimeEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
+        self.action_decimal_precision = action_decimal_precision
+        self.action_digit_precision = action_digit_precision
+        self.bytes_per_value = bytes_per_value
+        self.host = host
+        self.port_read = port_read
+        self.port_write = port_write
+        self.values_per_observation = values_per_observation
 
 class SimulatedEnvironmentConfig(EnvironmentConfig):
 
