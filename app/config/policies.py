@@ -13,6 +13,20 @@ class GaussianPolicyConfig(PolicyConfig):
              + f'    network = {self.network}\n'
              + '  )')
 
+class RangePolicyConfig(PolicyConfig):
+
+    def __init__(self, *, max, min, network):
+        self.max = max
+        self.min = min
+        self.network = NetworkConfig(**network)
+
+    def __str__(self):
+        return (f'RangePolicyConfig(\n'
+             + f'    max = {self.max}\n'
+             + f'    min = {self.min}\n'
+             + f'    network = {self.network}\n'
+             + '  )')
+
 class TestPolicyConfig(PolicyConfig):
 
     def __init__(self, *, change):

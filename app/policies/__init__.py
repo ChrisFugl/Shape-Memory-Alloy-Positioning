@@ -1,8 +1,10 @@
 from app.policies.gaussian import GaussianPolicy
+from app.policies.range import RangePolicy
 from app.policies.test import TestPolicy
 
 _policy_classes = {
     'gaussian': GaussianPolicy,
+    'range': RangePolicy,
     'test': TestPolicy
 }
 

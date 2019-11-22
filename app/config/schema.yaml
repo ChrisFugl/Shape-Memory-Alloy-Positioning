@@ -12,6 +12,7 @@ max_trajectory_length: int(min=1, required=False)
 model: include('model')
 policy: any(
   include('policy_gaussian'),
+  include('policy_range'),
   include('policy_test'))
 save_model: str(required=False)
 ---
@@ -79,6 +80,12 @@ network:
 ---
 policy_gaussian:
   type: enum('gaussian')
+  network: include('network')
+---
+policy_range:
+  type: enum('range')
+  max: num(required=True)
+  min: num(required=True)
   network: include('network')
 ---
 policy_test:

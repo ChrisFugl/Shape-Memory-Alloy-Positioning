@@ -1,5 +1,5 @@
 from app.config.environments import DebugEnvironmentConfig, RealTimeEnvironmentConfig, SimulatedEnvironmentConfig, TestEnvironmentConfig
-from app.config.policies import GaussianPolicyConfig, TestPolicyConfig
+from app.config.policies import GaussianPolicyConfig, RangePolicyConfig, TestPolicyConfig
 from app.config.model import ModelConfig
 
 _environment_classes = {
@@ -11,6 +11,7 @@ _environment_classes = {
 
 _policy_classes = {
     'gaussian': GaussianPolicyConfig,
+    'range': RangePolicyConfig,
     'test': TestPolicyConfig
 }
 
