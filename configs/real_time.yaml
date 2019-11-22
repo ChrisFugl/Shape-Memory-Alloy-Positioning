@@ -4,15 +4,17 @@ environment:
   action_decimal_precision: 4
   action_digit_precision: 2
   bytes_per_value: 8
-  host: 143.248.192.198
+  goal_position: 0.05
+  host: 110.76.115.143
+  next_state_wait_time: 0.2
   port_read: 6340
-  port_write: 6550
+  port_write: 6340
   values_per_observation: 1
-environment_steps: 10
+environment_steps: 5
 gradient_steps: 1
 iterations: 1000
 max_buffer_size: 100000
-max_trajectory_length: 30
+max_trajectory_length: 10
 model:
   discount_factor: 0.99
   exponential_weight: 0.005

@@ -3,6 +3,7 @@ class EnvironmentConfig:
     def __init__(self, observation_size, action_size):
         """
         :type observation_size: int
+        :type action_size: int
         """
         self.action_size = action_size
         self.observation_size = observation_size
@@ -23,18 +24,33 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         action_decimal_precision,
         action_digit_precision,
         bytes_per_value,
+        goal_position,
         host,
+        next_state_wait_time=None,
         port_read,
         port_write,
         values_per_observation
     ):
+        """
+        :type action_decimal_precision: float
+        :type action_digit_precision: float
+        :type bytes_per_value: int
+        :type goal_position: float
+        :type host: str
+        :type next_state_wait_time: float
+        :type port_read: int
+        :type port_write: int
+        :type values_per_observation: int
+        """
         action_size = 1
         observation_size = 3
         super(RealTimeEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
         self.action_decimal_precision = action_decimal_precision
         self.action_digit_precision = action_digit_precision
         self.bytes_per_value = bytes_per_value
+        self.goal_position = goal_position
         self.host = host
+        self.next_state_wait_time = next_state_wait_time
         self.port_read = port_read
         self.port_write = port_write
         self.values_per_observation = values_per_observation

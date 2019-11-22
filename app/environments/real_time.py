@@ -25,6 +25,8 @@ class RealTimeEnvironment(Environment):
         self.action_decimal_precision = config.action_decimal_precision
         self.action_digit_precision = config.action_digit_precision
         self.bytes_per_value = config.bytes_per_value
+        self.goal_position = config.goal_position
+        self.next_state_wait_time = config.next_state_wait_time
         self.values_per_observation = config.values_per_observation
 
         if config.port_read == config.port_write:
@@ -60,7 +62,6 @@ class RealTimeEnvironment(Environment):
 
     def fetch_state(self):
         observations = self.receive_observations()
-        print(f'received: {observations}')
         return list(observations)
 
     def is_terminal_state(self, state):
@@ -77,9 +78,8 @@ class RealTimeEnvironment(Environment):
     def send_action(self, action):
         action_length = self.action_decimal_precision + self.action_digit_precision + 1
         action_string = f'{action:0{action_length}.{self.action_decimal_precision}f}'
-        print(f'sending: {action_string}')
         action_encoded = action_string.encode('ascii')
-        action_bytes = bytes()
+        action_bytes = bytes(action_encoded)
         self.writer.send(action_bytes)
 
     def step(self, action):
@@ -89,9 +89,11 @@ class RealTimeEnvironment(Environment):
         :param action: action performed in current environment
         :return: (next state, reward)
         """
-        time.sleep(0.5)
         self.send_action(action[0])
-        time.sleep(0.5)
+        # it may be necessary to wait a while in order for the action
+        # to have an observable effect
+        if self.next_state_wait_time is not None:
+            time.sleep(self.next_state_wait_time)
         next_state = self.fetch_state()
         reward = self.reward(self.state, action, next_state)
         terminal = self.is_terminal_state(next_state)

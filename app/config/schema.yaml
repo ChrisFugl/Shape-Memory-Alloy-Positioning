@@ -27,6 +27,8 @@ environment_real_time:
   action_digit_precision: int(min=1, required=True)
   bytes_per_value: int(min=1, required=True)
   host: str(required=True)
+  goal_position: num(min=0, required=True)
+  next_state_wait_time: num(min=0, required=False)
   port_read: int(min=1, required=True)
   port_write: int(min=1, required=True)
   values_per_observation: int(int=1, required=True)
