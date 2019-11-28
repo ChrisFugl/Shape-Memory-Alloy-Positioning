@@ -71,6 +71,17 @@ def train(model, replay_buffer, environment, config, writer):
             max_trajectory_length=config.max_trajectory_length)
         replay_buffer.add_trajectories(trajectories)
 
+        # statistics to log to tensorboard
+        policy_loss_sum = 0
+        q1_loss_sum = 0
+        q2_loss_sum = 0
+        reward_sum = 0
+        observation_count = 0
+        for trajectory in trajectories:
+            reward_sum += trajectory.rewards.sum()
+            observation_count += len(trajectory.rewards)
+        reward_average = reward_sum / observation_count
+
         # train model
         for gradient_step in range(config.gradient_steps):
             batch_numpy = replay_buffer.random_batch()
@@ -82,12 +93,20 @@ def train(model, replay_buffer, environment, config, writer):
                 actions=torch.from_numpy(batch_numpy.actions).float(),
                 rewards=torch.from_numpy(batch_numpy.rewards).float(),
                 terminals=torch.from_numpy(batch_numpy.terminals).float())
+            policy_loss_sum += policy_loss
+            q1_loss_sum += q1_loss
+            q2_loss_sum += q2_loss
 
-        # TODO: log performance to tensorboard
-        writer.add_scalar('Policy Loss', policy_loss, iteration)
-        writer.add_scalar('Q1 Loss', q1_loss, iteration)
-        writer.add_scalar('Q2 Loss', q2_loss, iteration)
-        print(iteration)
+        # write to tensorboard
+        policy_loss_average = policy_loss_sum / config.gradient_steps
+        q1_loss_average = q1_loss_sum / config.gradient_steps
+        q2_loss_average = q2_loss_sum / config.gradient_steps
+        writer.add_scalar('loss/policy', policy_loss_average, iteration)
+        writer.add_scalar('loss/q1', q1_loss_average, iteration)
+        writer.add_scalar('loss/q2', q2_loss_average, iteration)
+        writer.add_scalar('reward', reward_average, iteration)
+
+        print(f'Iteration: {iteration} / {config.iterations}')
 
 
 if __name__ == '__main__':
