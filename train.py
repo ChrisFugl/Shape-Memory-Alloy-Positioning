@@ -62,6 +62,7 @@ def train(model, replay_buffer, environment, config, writer):
     :type config: app.config.Config
     :type writer: torch.utils.tensorboard.SummaryWriter
     """
+    model.train_mode()
     for iteration in range(config.iterations):
         # explore environment
         trajectories = rollouts(
@@ -75,6 +76,7 @@ def train(model, replay_buffer, environment, config, writer):
         policy_loss_sum = 0
         q1_loss_sum = 0
         q2_loss_sum = 0
+        alpha_loss_sum = 0
         reward_sum = 0
         observation_count = 0
         for trajectory in trajectories:
@@ -85,7 +87,7 @@ def train(model, replay_buffer, environment, config, writer):
         # train model
         for gradient_step in range(config.gradient_steps):
             batch_numpy = replay_buffer.random_batch()
-            policy_loss, q1_loss, q2_loss = model.train_batch(
+            policy_loss, q1_loss, q2_loss, alpha_loss = model.train_batch(
                 observations=torch.from_numpy(
                     batch_numpy.observations).float(),
                 next_observations=torch.from_numpy(
@@ -96,14 +98,17 @@ def train(model, replay_buffer, environment, config, writer):
             policy_loss_sum += policy_loss
             q1_loss_sum += q1_loss
             q2_loss_sum += q2_loss
+            alpha_loss_sum += alpha_loss
 
         # write to tensorboard
         policy_loss_average = policy_loss_sum / config.gradient_steps
         q1_loss_average = q1_loss_sum / config.gradient_steps
         q2_loss_average = q2_loss_sum / config.gradient_steps
+        alpha_loss_average = alpha_loss_sum / config.gradient_steps
         writer.add_scalar('loss/policy', policy_loss_average, iteration)
         writer.add_scalar('loss/q1', q1_loss_average, iteration)
         writer.add_scalar('loss/q2', q2_loss_average, iteration)
+        writer.add_scalar('loss/alpha', alpha_loss_average, iteration)
         writer.add_scalar('reward', reward_average, iteration)
 
         print(f'Iteration: {iteration} / {config.iterations}')

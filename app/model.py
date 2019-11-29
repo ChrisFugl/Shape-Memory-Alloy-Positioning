@@ -60,16 +60,16 @@ class Model:
         q2_actions = self.q2(observation_actions)
 
         # target q-values
-        target_q1 = self.target_q1(next_observation_policy_next_actions)
-        target_q2 = self.target_q2(next_observation_policy_next_actions)
-        target_q = torch.min(target_q1, target_q2) - alpha * policy_next_log_probability
-        q_target = self.reward_scale * rewards * (1.0 - terminals) * self.discount_factor * target_q
-        q_target_detached = q_target.detach()
+        target_q1_policy_next_actions = self.target_q1(next_observation_policy_next_actions)
+        target_q2_policy_next_actions = self.target_q2(next_observation_policy_next_actions)
+        target_q_policy_next_actions = torch.min(target_q1_policy_next_actions, target_q2_policy_next_actions)
+        value_next_observation = target_q_policy_next_actions - alpha * policy_next_log_probability
+        q_target = self.reward_scale * rewards + (1.0 - terminals) * self.discount_factor * value_next_observation
 
         # losses
         policy_loss = (alpha * policy_log_probability - q_policy_actions).mean()
-        q1_loss = self.q_criterion(q1_actions, q_target_detached)
-        q2_loss = self.q_criterion(q2_actions, q_target_detached)
+        q1_loss = self.q_criterion(q1_actions, q_target.detach())
+        q2_loss = self.q_criterion(q2_actions, q_target.detach())
 
         # optimize
         self.optimize(self.q1_optimizer, q1_loss)
@@ -78,7 +78,7 @@ class Model:
         self.update_exponential_moving_target(self.q1, self.target_q1)
         self.update_exponential_moving_target(self.q2, self.target_q2)
 
-        return policy_loss.detach().numpy(), q1_loss.detach().numpy(), q2_loss.detach().numpy()
+        return policy_loss.detach().numpy(), q1_loss.detach().numpy(), q2_loss.detach().numpy(), alpha_loss.detach().numpy()
 
     def get_action(self, observation):
         """
@@ -94,15 +94,17 @@ class Model:
 
     def update_exponential_moving_target(self, q, target):
         for q_param, target_param in zip(q.parameters(), target.parameters()):
-            q_contribution = q_param.data * self.exponential_weight
-            target_contribution = target_param.data * (1.0 - self.exponential_weight)
-            new_target_param = target_contribution + q_contribution
-            target_param.data.copy_(new_target_param)
+            q_contribution = self.exponential_weight * q_param.data
+            target_contribution = (1.0 - self.exponential_weight) * target_param.data
+            target_param_new = q_contribution + target_contribution
+            target_param.data.copy_(target_param_new)
 
     def eval_mode(self):
         self.policy.eval()
         self.q1.eval()
         self.q2.eval()
+        self.target_q1.eval()
+        self.target_q2.eval()
 
     def train_mode(self):
         self.policy.train()
