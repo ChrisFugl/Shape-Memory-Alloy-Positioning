@@ -14,6 +14,7 @@ class DebugEnvironment(Environment):
         """
         super(DebugEnvironment, self).__init__(config)
         self.config = config
+        self.goal_position = config.goal_position
         self.epsilon = 10 ** -3
         self.state = self.get_initial_state()
 
@@ -21,10 +22,10 @@ class DebugEnvironment(Environment):
         min_position = self.config.min_start_position
         max_position = self.config.max_start_position
         position = min_position + (max_position - min_position) * random()
-        return np.array([position])
+        return np.array([position, self.goal_position], dtype=np.float)
 
     def get_next_state(self, action):
-        return self.state + action
+        return np.array([self.state[0] + action, self.state[1]], dtype=np.float)
 
     def get_state(self):
         return self.state
@@ -36,9 +37,10 @@ class DebugEnvironment(Environment):
         self.state = self.get_initial_state()
 
     def reward(self, state, action, next_state):
-        distance_to_goal = abs(next_state[0] - self.config.goal_position)
-        similarity_to_goal = exp(-distance_to_goal)
-        return similarity_to_goal
+        distance_to_goal = abs(state[0] - self.goal_position)
+        next_distance_to_goal = abs(next_state[0] - self.goal_position)
+        next_similarity_to_goal = exp(-next_distance_to_goal)
+        return (distance_to_goal - next_distance_to_goal) + next_similarity_to_goal
 
     def step(self, action):
         """

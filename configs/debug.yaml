@@ -1,34 +1,28 @@
 batch_size: 128
 environment:
   type: debug
-  goal_position: 5
+  goal_position: 5.0
   min_start_position: 0
   max_start_position: 10
 environment_steps: 1
 gradient_steps: 4
 iterations: 2000
 max_buffer_size: 100000
-max_trajectory_length: 50
+max_trajectory_length: 10
 model:
   discount_factor: 0.99
   exponential_weight: 0.005
   learning_rate_policy: 0.0003
   learning_rate_q: 0.0003
   network:
-    hidden_size: 16
+    hidden_size: 32
     number_of_hidden_layers: 2
-  reward_scale: 100.0
+  reward_scale: 3.0
 policy:
-  type: categorical
-  actions:
-    - -1
-    - -0.33
-    - 0.01
-    - 0
-    - 0.01
-    - 0.33
-    - 1
+  type: range
+  min: -1
+  max: 1
   network:
-    hidden_size: 16
+    hidden_size: 32
     number_of_hidden_layers: 2
 save_model: saved_models/debug/
