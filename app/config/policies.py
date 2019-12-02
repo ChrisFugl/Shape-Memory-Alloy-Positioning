@@ -3,6 +3,18 @@ from app.config.network import NetworkConfig
 class PolicyConfig:
     pass
 
+class CategoricalPolicyConfig(PolicyConfig):
+
+    def __init__(self, *, actions, network):
+        self.actions = actions
+        self.network = NetworkConfig(**network)
+
+    def __str__(self):
+        return (f'CategoricalPolicy(\n'
+             + f'    actions = {self.actions}\n'
+             + f'    network = {self.network}\n'
+             + '  )')
+
 class GaussianPolicyConfig(PolicyConfig):
 
     def __init__(self, *, network):

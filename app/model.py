@@ -1,5 +1,6 @@
 from app.network import Network
 from app.policies import get_policy
+import os
 import torch
 from torch import optim, nn
 
@@ -18,7 +19,7 @@ class Model:
         q_input_size = environment.observation_size + environment.action_size
         hidden_size = config.network.hidden_size
         number_of_hidden_layers = config.network.number_of_hidden_layers
-        self.target_entropy = -1
+        self.target_entropy = - environment.action_size
         self.log_alpha = torch.zeros(1, requires_grad=True)
         self.policy = policy
         self.reward_scale = config.reward_scale
@@ -39,12 +40,10 @@ class Model:
         Forward pass.
         Assumes inputs are torch tensors.
         """
-        policy_actions, policy_log_probability = self.policy(observations)
-
-        alpha_loss = - (self.log_alpha * (policy_log_probability + self.target_entropy).detach()).mean()
-        self.optimize(self.alpha_optimizer, alpha_loss)
         alpha = self.log_alpha.exp()
+        alpha_detached = alpha.detach()
 
+        policy_actions, policy_log_probability = self.policy(observations)
         policy_next_actions, policy_next_log_probability = self.policy(next_observations)
 
         # concatenate observations and corresponding actions
@@ -63,18 +62,20 @@ class Model:
         target_q1_policy_next_actions = self.target_q1(next_observation_policy_next_actions)
         target_q2_policy_next_actions = self.target_q2(next_observation_policy_next_actions)
         target_q_policy_next_actions = torch.min(target_q1_policy_next_actions, target_q2_policy_next_actions)
-        value_next_observation = target_q_policy_next_actions - alpha * policy_next_log_probability
+        value_next_observation = target_q_policy_next_actions - alpha_detached * policy_next_log_probability
         q_target = self.reward_scale * rewards + (1.0 - terminals) * self.discount_factor * value_next_observation
 
         # losses
-        policy_loss = (alpha * policy_log_probability - q_policy_actions).mean()
         q1_loss = self.q_criterion(q1_actions, q_target.detach())
         q2_loss = self.q_criterion(q2_actions, q_target.detach())
+        policy_loss = (alpha_detached * policy_log_probability - q_policy_actions).mean()
+        alpha_loss = - (alpha * (policy_log_probability + self.target_entropy).detach()).mean()
 
         # optimize
         self.optimize(self.q1_optimizer, q1_loss)
         self.optimize(self.q2_optimizer, q2_loss)
         self.optimize(self.policy_optimizer, policy_loss)
+        self.optimize(self.alpha_optimizer, alpha_loss)
         self.update_exponential_moving_target(self.q1, self.target_q1)
         self.update_exponential_moving_target(self.q2, self.target_q2)
 
@@ -91,6 +92,10 @@ class Model:
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+
+    def copy_parameters(self, source, target):
+        for source_param, target_param in zip(source.parameters(), target.parameters()):
+            target_param.data.copy_(source_param.data)
 
     def update_exponential_moving_target(self, q, target):
         for q_param, target_param in zip(q.parameters(), target.parameters()):
@@ -114,7 +119,13 @@ class Model:
         self.target_q2.train()
 
     def load(self, path):
-        raise NotImplementedError('model.load is not implemented yet')
+        self.policy.load_state_dict(torch.load(os.path.join(path, 'policy.pt')))
+        self.q1.load_state_dict(torch.load(os.path.join(path, 'q1.pt')))
+        self.q2.load_state_dict(torch.load(os.path.join(path, 'q2.pt')))
+        self.copy_parameters(self.q1, self.target_q1)
+        self.copy_parameters(self.q2, self.target_q2)
 
     def save(self, path):
-        raise NotImplementedError('model.save is not implemented yet')
+        torch.save(self.policy.state_dict(), os.path.join(path, 'policy.pt'))
+        torch.save(self.q1.state_dict(), os.path.join(path, 'q1.pt'))
+        torch.save(self.q2.state_dict(), os.path.join(path, 'q2.pt'))

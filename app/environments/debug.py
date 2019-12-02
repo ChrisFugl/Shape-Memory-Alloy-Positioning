@@ -14,7 +14,8 @@ class DebugEnvironment(Environment):
         """
         super(DebugEnvironment, self).__init__(config)
         self.config = config
-        self.epsilon = 10 ** -9
+        self.epsilon = 10 ** -3
+        self.state = self.get_initial_state()
 
     def get_initial_state(self):
         min_position = self.config.min_start_position
@@ -44,7 +45,7 @@ class DebugEnvironment(Environment):
         Finds the next state in the simulated environmet.
 
         :param action: action performed in current environment
-        :return: (next state, reward)
+        :return: (next state, reward, terminal)
         """
         next_state = self.get_next_state(action)
         reward = self.reward(self.state, action, next_state)

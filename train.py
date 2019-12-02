@@ -4,6 +4,7 @@ from app.model import Model
 from app.policies import get_policy
 from app.replay_buffer import ReplayBuffer
 from app.rollout import rollouts
+import os
 from torch.utils.tensorboard import SummaryWriter
 import argparse
 import torch
@@ -29,7 +30,8 @@ def main():
 
     # save trained model
     if config.save_model is not None:
-        model.save(options.save_model)
+        os.makedirs(config.save_model, exist_ok=True)
+        model.save(config.save_model)
 
 
 def parse_arguments(arguments):
@@ -111,7 +113,7 @@ def train(model, replay_buffer, environment, config, writer):
         writer.add_scalar('loss/alpha', alpha_loss_average, iteration)
         writer.add_scalar('reward', reward_average, iteration)
 
-        print(f'Iteration: {iteration} / {config.iterations}')
+        print(f'Iteration: {iteration + 1} / {config.iterations}')
 
 
 if __name__ == '__main__':

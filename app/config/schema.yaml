@@ -11,6 +11,7 @@ max_buffer_size: int(min=1, required=False)
 max_trajectory_length: int(min=1, required=False)
 model: include('model')
 policy: any(
+  include('policy_categorical'),
   include('policy_gaussian'),
   include('policy_range'),
   include('policy_test'))
@@ -77,6 +78,11 @@ model:
 network:
   hidden_size: int(min=1, required=False)
   number_of_hidden_layers: int(min=1, required=False)
+---
+policy_categorical:
+  type: enum('categorical')
+  actions: list(num(), min=1)
+  network: include('network')
 ---
 policy_gaussian:
   type: enum('gaussian')
