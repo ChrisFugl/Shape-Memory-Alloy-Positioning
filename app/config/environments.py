@@ -11,8 +11,8 @@ class EnvironmentConfig:
 class DebugEnvironmentConfig(EnvironmentConfig):
 
     def __init__(self, *, min_start_position=0, max_start_position=100, goal_position=50):
-        action_size = 1
         observation_size = 2
+        action_size = 1
         super(DebugEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
         self.min_start_position = min_start_position
         self.max_start_position = max_start_position

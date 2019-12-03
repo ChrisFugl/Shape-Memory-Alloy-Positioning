@@ -1,3 +1,5 @@
+gtimer>=1.0.0b5
+gym>=0.15.4
 ipykernel>=5.1.3
 matplotlib>=3.0.3
 numpy>=1.17.3
@@ -8,3 +10,4 @@ torch>=1.3.0.post2
 torchvision>=0.4.1.post2
 yamale>=2.0.1
 tensorboard
+-e git+https://github.com/vitchyr/rlkit@1d469a509b797ca04a39b8734c1816ca7d108fc8#egg=rlkit

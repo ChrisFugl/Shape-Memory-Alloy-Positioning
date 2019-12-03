@@ -1,4 +1,6 @@
-class Environment:
+import gym
+
+class Environment(gym.Env):
     """
     Base class that defines an environment. An environment should inherit from this class.
     """
@@ -7,6 +9,7 @@ class Environment:
         """
         :type config: app.config.environments.EnvironmentConfig
         """
+        super(Environment, self).__init__()
         self.action_size = config.action_size
         self.observation_size = config.observation_size
 
@@ -21,6 +24,9 @@ class Environment:
         :return: boolean whether current state is the terminal state
         """
         raise NotImplementedError('is_terminal_state should be implemented by a subclass')
+
+    def render(self):
+        raise NotImplementedError()
 
     def reset(self):
         raise NotImplementedError('reset method should be implemented by subclass')
