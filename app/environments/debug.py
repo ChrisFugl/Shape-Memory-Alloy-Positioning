@@ -21,8 +21,7 @@ class DebugEnvironment(Environment):
         super(DebugEnvironment, self).__init__(config)
         self.config = config
         self.goal_position = config.goal_position
-        # self.epsilon = 10 ** -2
-        self.epsilon = 1
+        self.goal_tolerance = config.goal_tolerance
         self.state = self.get_initial_state()
         self.action_space = spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
         self.observation_space = spaces.Box(low=OBSERVATION_LOW, high=OBSERVATION_HIGH, shape=(config.observation_size,), dtype=np.float)
@@ -42,7 +41,7 @@ class DebugEnvironment(Environment):
         return self.state
 
     def is_terminal_state(self, state):
-        return abs(state[0] - self.goal_position) < self.epsilon
+        return abs(state[0] - self.goal_position) < self.goal_tolerance
 
     def render(self):
         pass
@@ -55,6 +54,8 @@ class DebugEnvironment(Environment):
         distance_to_goal = abs(state[0] - self.goal_position)
         next_distance_to_goal = abs(next_state[0] - self.goal_position)
         next_similarity_to_goal = exp(-next_distance_to_goal)
+        if self.is_terminal_state(next_state):
+            return (distance_to_goal - next_distance_to_goal) + 1
         return (distance_to_goal - next_distance_to_goal) + next_similarity_to_goal
 
     def step(self, action):

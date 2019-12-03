@@ -34,7 +34,7 @@ def main():
             num_eval_steps_per_epoch=config.environment_steps,
             num_trains_per_train_loop=config.gradient_steps,
             num_expl_steps_per_train_loop=config.environment_steps,
-            min_num_steps_before_training=100,
+            min_num_steps_before_training=1,
             max_path_length=config.max_trajectory_length,
             batch_size=config.batch_size,
         ),
