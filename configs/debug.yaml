@@ -3,27 +3,27 @@ environment:
   type: debug
   goal_position: 5.0
   goal_tolerance: 3.0
-  min_start_position: -2.0
+  min_start_position: 0.0
   max_start_position: 2.0
-environment_steps: 200
-gradient_steps: 100
+environment_steps: 128
+gradient_steps: 50
 iterations: 200
 max_buffer_size: 100000
 max_trajectory_length: 10
 model:
   discount_factor: 0.99
   exponential_weight: 0.005
-  learning_rate_policy: 0.0001
-  learning_rate_q: 0.0001
+  learning_rate_policy: 0.0003
+  learning_rate_q: 0.0003
   network:
-    hidden_size: 16
+    hidden_size: 32
     number_of_hidden_layers: 2
   reward_scale: 3.0
 policy:
   type: range
-  min: -1
-  max: 1
+  min: -1.0
+  max: 1.0
   network:
-    hidden_size: 16
+    hidden_size: 32
     number_of_hidden_layers: 2
 save_model: saved_models/debug/

@@ -7,7 +7,7 @@ from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
-from rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic
+from rlkit.torch.sac.policies import MakeDeterministic, TanhGaussianPolicy
 from rlkit.torch.sac.sac import SACTrainer
 from rlkit.torch.networks import FlattenMlp
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
@@ -23,7 +23,7 @@ def main():
     config = load_config(options.config)
     exploration_environment = get_environment(config.environment_type, config.environment)
     evaluation_environment = get_environment(config.environment_type, config.environment)
-    # policy = get_policy(config.policy_type, config.policy, evaluation_environment)
+    policy = get_policy(config.policy_type, config.policy, evaluation_environment)
     variant = dict(
         algorithm='SAC',
         version='normal',
@@ -50,7 +50,7 @@ def main():
     )
     setup_logger(options.name, variant=variant)
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    experiment(variant, exploration_environment, evaluation_environment)
+    experiment(variant, exploration_environment, evaluation_environment, policy)
 
 
 def parse_arguments(arguments):
@@ -73,7 +73,7 @@ def load_config(config_path):
     return config
 
 
-def experiment(variant, expl_env, eval_env):
+def experiment(variant, expl_env, eval_env, policy):
     expl_env = NormalizedBoxEnv(expl_env)
     eval_env = NormalizedBoxEnv(eval_env)
     obs_dim = expl_env.observation_size
