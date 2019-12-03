@@ -31,11 +31,10 @@ def main():
         replay_buffer_size=config.max_buffer_size,
         algorithm_kwargs=dict(
             num_epochs=config.iterations,
-            num_paths=10,
             num_eval_steps_per_epoch=config.environment_steps,
             num_trains_per_train_loop=config.gradient_steps,
             num_expl_steps_per_train_loop=config.environment_steps,
-            min_num_steps_before_training=1,
+            min_num_steps_before_training=100,
             max_path_length=config.max_trajectory_length,
             batch_size=config.batch_size,
         ),
@@ -49,7 +48,7 @@ def main():
             use_automatic_entropy_tuning=True,
         ),
     )
-    setup_logger('options.name', variant=variant)
+    setup_logger(options.name, variant=variant)
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     experiment(variant, exploration_environment, evaluation_environment)
 

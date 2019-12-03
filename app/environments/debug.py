@@ -21,7 +21,8 @@ class DebugEnvironment(Environment):
         super(DebugEnvironment, self).__init__(config)
         self.config = config
         self.goal_position = config.goal_position
-        self.epsilon = 10 ** -2
+        # self.epsilon = 10 ** -2
+        self.epsilon = 1
         self.state = self.get_initial_state()
         self.action_space = spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
         self.observation_space = spaces.Box(low=OBSERVATION_LOW, high=OBSERVATION_HIGH, shape=(config.observation_size,), dtype=np.float)
