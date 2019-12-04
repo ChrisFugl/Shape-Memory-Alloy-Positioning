@@ -49,6 +49,11 @@ def rollout(environment, policy, max_trajectory_length=np.inf):
         if terminal == 1:
             break
         observation = next_observation
+    # print("observation")
+    # print(observations)
+    # print("action")
+    # print(actions)
+    # input()     
     actions = actions2numpy(actions)
     observations, next_observations = observations2numpy(observations, next_observation)
     rewards = np.array(rewards, dtype=np.float64)

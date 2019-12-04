@@ -59,6 +59,8 @@ class Model:
         q1_actions = self.q1(observation_actions)
         q2_actions = self.q2(observation_actions)
 
+        # result1 = self.q1(observation_policy_actions)
+
         # target q-values
         target_q1_policy_next_actions = self.target_q1(next_observation_policy_next_actions)
         target_q2_policy_next_actions = self.target_q2(next_observation_policy_next_actions)
@@ -71,12 +73,25 @@ class Model:
         q1_loss = self.q_criterion(q1_actions, q_target.detach())
         q2_loss = self.q_criterion(q2_actions, q_target.detach())
 
+        prev_q1 = self.q1
+        prev_q2 = self.q2
+        prev_policy = self.policy
         # optimize
         self.optimize(self.q1_optimizer, q1_loss)
         self.optimize(self.q2_optimizer, q2_loss)
         self.optimize(self.policy_optimizer, policy_loss)
         self.update_exponential_moving_target(self.q1, self.target_q1)
         self.update_exponential_moving_target(self.q2, self.target_q2)
+
+        # result2 = self.q1(observation_policy_actions)
+
+        # print(result1 == result2)
+
+        # exit()
+
+        # print(prev_q1 == self.q1)
+        # print(prev_q2 == self.q2)
+        # print(prev_policy == self.policy)
 
         return policy_loss.detach().numpy(), q1_loss.detach().numpy(), q2_loss.detach().numpy(), alpha_loss.detach().numpy()
 

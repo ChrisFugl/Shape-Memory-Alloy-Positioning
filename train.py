@@ -99,7 +99,7 @@ def train(model, replay_buffer, environment, config, writer):
             q1_loss_sum += q1_loss
             q2_loss_sum += q2_loss
             alpha_loss_sum += alpha_loss
-
+            
         # write to tensorboard
         policy_loss_average = policy_loss_sum / config.gradient_steps
         q1_loss_average = q1_loss_sum / config.gradient_steps

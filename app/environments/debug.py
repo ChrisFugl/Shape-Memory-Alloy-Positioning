@@ -19,7 +19,9 @@ class DebugEnvironment(Environment):
     def get_initial_state(self):
         min_position = self.config.min_start_position
         max_position = self.config.max_start_position
-        position = min_position + (max_position - min_position) * random()
+        # position = min_position + (max_position - min_position) * random()
+        # print("Current position: " + str(position))
+        position = 2
         return np.array([position])
 
     def get_next_state(self, action):
@@ -34,9 +36,27 @@ class DebugEnvironment(Environment):
     def reset(self):
         self.state = self.get_initial_state()
 
+    # def reward(self, state, action, next_state):
+    #     distance_to_goal = abs(next_state[0] - self.config.goal_position)
+    #     similarity_to_goal = exp(-distance_to_goal)
+    #     return similarity_to_goal
+
     def reward(self, state, action, next_state):
-        distance_to_goal = abs(next_state[0] - self.config.goal_position)
-        similarity_to_goal = exp(-distance_to_goal)
+        new_distance_to_goal = abs(next_state[0] - self.config.goal_position)
+        old_distance_to_goal = abs(state[0] - self.config.goal_position)
+        distance = old_distance_to_goal - new_distance_to_goal 
+        direction = 0
+        # ext = 1
+        ext = 10
+        gam = 0.1
+        if distance < 0:
+            direction = 1
+        if direction == 1:
+            # similarity_to_goal = exp((ext - gam * new_distance_to_goal)) ### When future position is closer to the target
+            similarity_to_goal = exp(-gam * new_distance_to_goal)
+        else:
+            # similarity_to_goal = exp((- ext - gam * new_distance_to_goal)) ### When future position is further from the target
+            similarity_to_goal = -exp(gam * new_distance_to_goal)
         return similarity_to_goal
 
     def step(self, action):
