@@ -1,5 +1,5 @@
 from app.config.environments import DebugEnvironmentConfig, RealTimeEnvironmentConfig, SimulatedEnvironmentConfig, TestEnvironmentConfig
-from app.config.policies import CategoricalPolicyConfig, GaussianPolicyConfig, RangePolicyConfig, TestPolicyConfig
+from app.config.policies import CategoricalPolicyConfig, GaussianPolicyConfig, RangePolicyConfig, TanhGaussianPolicyConfig, TestPolicyConfig
 from app.config.model import ModelConfig
 
 _environment_classes = {
@@ -13,6 +13,7 @@ _policy_classes = {
     'categorical': CategoricalPolicyConfig,
     'gaussian': GaussianPolicyConfig,
     'range': RangePolicyConfig,
+    'tanh_gaussian': TanhGaussianPolicyConfig,
     'test': TestPolicyConfig
 }
 

@@ -20,6 +20,8 @@ class SimulatedEnvironment(Environment):
     temperature (and so deflection) from voltage
     """
 
+    name = 'simulated'
+
     def __init__(self, config):
         """
         :type config: app.config.environments.SimulatedEnvironmentConfig

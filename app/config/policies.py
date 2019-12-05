@@ -39,6 +39,16 @@ class RangePolicyConfig(PolicyConfig):
              + f'    network = {self.network}\n'
              + '  )')
 
+class TanhGaussianPolicyConfig(PolicyConfig):
+
+    def __init__(self, *, network):
+        self.network = NetworkConfig(**network)
+
+    def __str__(self):
+        return (f'TanhGaussianPolicyConfig(\n'
+             + f'    network = {self.network}\n'
+             + '  )')
+
 class TestPolicyConfig(PolicyConfig):
 
     def __init__(self, *, change):

@@ -10,6 +10,8 @@ class TestEnvironment(Environment):
     action: 1D ndarray of size 1
     """
 
+    name = 'test'
+
     def __init__(self, config):
         """
         :type config: app.config.environments.TestEnvironmentConfig

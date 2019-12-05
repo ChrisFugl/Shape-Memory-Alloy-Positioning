@@ -3,7 +3,8 @@ environment: any(
   include('environment_debug'),
   include('environment_real_time'),
   include('environment_simulated'),
-  include('environment_test'))
+  include('environment_test'),
+  )
 environment_steps: int(required=False)
 gradient_steps: int(required=False)
 iterations: int(required=False)
@@ -14,7 +15,9 @@ policy: any(
   include('policy_categorical'),
   include('policy_gaussian'),
   include('policy_range'),
-  include('policy_test'))
+  include('policy_tanh_gaussian'),
+  include('policy_test'),
+  )
 save_model: str(required=False)
 ---
 environment_debug:
@@ -93,6 +96,9 @@ policy_range:
   type: enum('range')
   max: num(required=True)
   min: num(required=True)
+  network: include('network')
+policy_tanh_gaussian:
+  type: enum('tanh_gaussian')
   network: include('network')
 ---
 policy_test:

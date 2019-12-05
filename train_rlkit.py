@@ -28,6 +28,7 @@ def main():
         algorithm='SAC',
         version='normal',
         layer_size=config.model.network.hidden_size,
+        number_of_layers=config.model.network.number_of_hidden_layers,
         replay_buffer_size=config.max_buffer_size,
         algorithm_kwargs=dict(
             num_epochs=config.iterations,
@@ -74,50 +75,27 @@ def load_config(config_path):
 
 
 def experiment(variant, expl_env, eval_env, policy):
+    print(f'Environment: {expl_env.name}')
+    print(f'Policy: {policy.name}')
+
     expl_env = NormalizedBoxEnv(expl_env)
     eval_env = NormalizedBoxEnv(eval_env)
     obs_dim = expl_env.observation_size
     action_dim = eval_env.action_size
 
-    M = variant['layer_size']
-    qf1 = FlattenMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
-    )
-    qf2 = FlattenMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
-    )
-    target_qf1 = FlattenMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
-    )
-    target_qf2 = FlattenMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
-    )
-    policy = TanhGaussianPolicy(
-        obs_dim=obs_dim,
-        action_dim=action_dim,
-        hidden_sizes=[M, M],
-    )
+    layer_size = variant['layer_size']
+    number_of_layers = variant['number_of_layers']
+    hidden_sizes = [layer_size] * number_of_layers
+    q_input_size = obs_dim + action_dim
+    q_output_size = 1
+    qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    target_qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    target_qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
     eval_policy = MakeDeterministic(policy)
-    eval_path_collector = MdpPathCollector(
-        eval_env,
-        eval_policy,
-    )
-    expl_path_collector = MdpPathCollector(
-        expl_env,
-        policy,
-    )
-    replay_buffer = EnvReplayBuffer(
-        variant['replay_buffer_size'],
-        expl_env,
-    )
+    eval_path_collector = MdpPathCollector(eval_env, eval_policy)
+    expl_path_collector = MdpPathCollector(expl_env, policy)
+    replay_buffer = EnvReplayBuffer(variant['replay_buffer_size'], expl_env)
     trainer = SACTrainer(
         env=eval_env,
         policy=policy,

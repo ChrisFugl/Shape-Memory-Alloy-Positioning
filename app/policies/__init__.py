@@ -1,12 +1,14 @@
 from app.policies.categorical import CategoricalPolicy
 from app.policies.gaussian import GaussianPolicy
 from app.policies.range import RangePolicy
+from app.policies.tanh_gaussian import TanhGaussianPolicy
 from app.policies.test import TestPolicy
 
 _policy_classes = {
     'categorical': CategoricalPolicy,
     'gaussian': GaussianPolicy,
     'range': RangePolicy,
+    'tanh_gaussian': TanhGaussianPolicy,
     'test': TestPolicy
 }
 

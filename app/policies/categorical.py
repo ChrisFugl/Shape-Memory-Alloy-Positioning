@@ -8,6 +8,8 @@ class CategoricalPolicy(Policy):
     Policy with a discrete action set.
     """
 
+    name = 'categorical'
+
     def __init__(self, config, environment):
         """
         :type config: app.config.policies.CategoricalPolicyConfig

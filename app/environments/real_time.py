@@ -17,6 +17,8 @@ class RealTimeEnvironment(Environment):
         * voltage
     """
 
+    name = 'real_time'
+
     def __init__(self, config):
         """
         :type config: app.config.environments.RealTimeEnvironmentConfig

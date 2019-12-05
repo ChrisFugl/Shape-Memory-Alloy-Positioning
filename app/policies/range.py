@@ -14,6 +14,8 @@ class RangePolicy(Mlp, ExplorationPolicy):
     Predicts an action in a predefined range.
     """
 
+    name = 'range'
+
     def __init__(self, config, environment):
         """
         :type config: app.config.policies.RangePolicyConfig

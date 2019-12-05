@@ -5,7 +5,9 @@ class TestPolicy(Policy):
     Policy that should only be used for testing purposes.
     """
 
-    def __init__(self, config, envionment):
+    name = 'test'
+
+    def __init__(self, config, environment):
         """
         :type config: app.config.policies.TestPolicyConfig
         :type environment: app.config.environments.EnvironmentConfig

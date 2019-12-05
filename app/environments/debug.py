@@ -14,6 +14,8 @@ class DebugEnvironment(Environment):
     Environment used for debugging.
     """
 
+    name = 'debug'
+
     def __init__(self, config):
         """
         :type config: app.config.environments.DebugEnvironmentConfig

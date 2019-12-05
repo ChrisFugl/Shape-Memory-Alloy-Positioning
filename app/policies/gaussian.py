@@ -11,6 +11,8 @@ class GaussianPolicy(Policy):
     Poliy which makes use of a gaussian to predict a continuous action.
     """
 
+    name = 'gaussian'
+
     def __init__(self, config, environment, deterministic=False):
         """
         :type config: app.config.policies.GaussianPolicyConfig
