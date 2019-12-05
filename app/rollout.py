@@ -38,7 +38,7 @@ def rollout(environment, policy, max_trajectory_length=np.inf):
     trajectory_length = 0
     while trajectory_length < max_trajectory_length:
         action = policy.get_action(np.array([observation]))[0]
-        next_observation, reward, terminal = environment.step(action)
+        next_observation, reward, terminal, this = environment.step(action)
         observations.append(observation)
         actions.append(action)
         rewards.append(reward)

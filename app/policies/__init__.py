@@ -1,11 +1,13 @@
 from app.policies.gaussian import GaussianPolicy
 from app.policies.range import RangePolicy
 from app.policies.test import TestPolicy
+from app.policies.tanhgaussian import TanhGaussianPolicy
 
 _policy_classes = {
     'gaussian': GaussianPolicy,
     'range': RangePolicy,
-    'test': TestPolicy
+    'test': TestPolicy,
+    'tanhgaussian': TanhGaussianPolicy
 }
 
 def get_policy(policy_type, policy_config, environment, **kwargs):

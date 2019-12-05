@@ -36,3 +36,5 @@ class TestPolicyConfig(PolicyConfig):
         return (f'TestPolicy(\n'
              + f'    change = {self.change}\n'
              + '  )')
+
+

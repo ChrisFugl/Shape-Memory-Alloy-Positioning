@@ -1,10 +1,15 @@
+<<<<<<< Updated upstream
+=======
+ygtimer>=1.0.0b5
+gym>=0.15.4
+>>>>>>> Stashed changes
 ipykernel>=5.1.3
 matplotlib>=3.0.3
 numpy>=1.17.3
 python-language-server>=0.29.1
 PyYAML>=5.1.2
 scipy>=1.3.2
-torch>=1.3.0.post2
-torchvision>=0.4.1.post2
+torch>=1.3.0
+torchvision>=0.4.1
 yamale>=2.0.1
 tensorboard

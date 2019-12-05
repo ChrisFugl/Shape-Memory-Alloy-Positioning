@@ -10,6 +10,7 @@ import torch
 import sys
 import yaml
 import yamale
+from app.policies.tanhgaussian import TanhGaussianPolicy
 
 CONFIG_SCHEMA_PATH = 'app/config/schema.yaml'
 
@@ -19,7 +20,8 @@ def main():
     options = parse_arguments(arguments)
     config = load_config(options.config)
     environment = get_environment(config.environment_type, config.environment)
-    policy = get_policy(config.policy_type, config.policy, environment)
+    # policy = get_policy(config.policy_type, config.policy, environment)
+    policy = TanhGaussianPolicy([32, 32], 2, 1)
     replay_buffer = ReplayBuffer(config.batch_size, config.max_buffer_size,
                                  environment.observation_size,
                                  environment.action_size)
