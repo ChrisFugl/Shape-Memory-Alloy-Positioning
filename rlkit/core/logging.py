@@ -16,6 +16,7 @@ import json
 import pickle
 import errno
 import torch
+from torch.utils.tensorboard import SummaryWriter
 
 from rlkit.core.tabulate import tabulate
 
@@ -91,6 +92,9 @@ class Logger(object):
         self._log_tabular_only = False
         self._header_printed = False
         self.table_printer = TerminalTablePrinter()
+
+        # TODO: set name dynamically
+        self._tensorboard_writer = SummaryWriter(log_dir='runs/test')
 
     def reset(self):
         self.__init__()
@@ -256,10 +260,17 @@ class Logger(object):
         if len(self._tabular) > 0:
             if self._log_tabular_only:
                 self.table_printer.print_tabular(self._tabular)
+                pass
             else:
                 for line in tabulate(self._tabular).split('\n'):
                     self.log(line, *args, **kwargs)
+                    pass
             tabular_dict = dict(self._tabular)
+            # write to tensorboard
+            epoch = tabular_dict['Epoch']
+            for name, value in tabular_dict.items():
+                if name != 'Epoch':
+                    self._tensorboard_writer.add_scalar(name, float(value), epoch)
             # Also write to the csv files
             # This assumes that the keys in each iteration won't change!
             for tabular_fd in list(self._tabular_fds.values()):
@@ -303,4 +314,3 @@ class Logger(object):
 
 
 logger = Logger()
-

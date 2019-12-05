@@ -1,13 +1,13 @@
-batch_size: 128
+batch_size: 256
 environment:
   type: debug
   goal_position: 5.0
   goal_tolerance: 3.0
   min_start_position: 0.0
   max_start_position: 2.0
-environment_steps: 128
+environment_steps: 256
 gradient_steps: 50
-iterations: 200
+iterations: 500
 max_buffer_size: 100000
 max_trajectory_length: 10
 model:
