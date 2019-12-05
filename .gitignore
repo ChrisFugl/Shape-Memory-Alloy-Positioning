@@ -2,3 +2,5 @@ env/
 __pycache__/
 notebooks/
 runs/
+saved_models/
+data/

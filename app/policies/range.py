@@ -1,65 +1,70 @@
 from app.network import Network
 from app.policies.policy import Policy
+from rlkit.policies.base import ExplorationPolicy
+from rlkit.torch.core import eval_np
+from rlkit.torch.networks import Mlp
 import torch
 from torch import nn
 from torch.distributions import Beta
 
-EPSILON = 0.1
+EPSILON = 10e-9
 
-class RangePolicy(Policy):
+class RangePolicy(Mlp, ExplorationPolicy):
     """
     Predicts an action in a predefined range.
     """
 
-    def __init__(self, config, environment, deterministic=False):
+    def __init__(self, config, environment):
         """
         :type config: app.config.policies.RangePolicyConfig
         :type environment: app.config.environments.EnvironmentConfig
         """
-        super(Policy, self).__init__()
+        hidden_sizes = [config.network.hidden_size] * config.network.number_of_hidden_layers
         input_size = environment.observation_size
         output_size = 2
-        hidden_size = config.network.hidden_size
-        number_of_hidden_layers = config.network.number_of_hidden_layers
-        self.max = config.max
+        init_w = 1e-3
+        super().__init__(hidden_sizes, input_size=input_size, output_size=output_size, init_w=init_w)
+        self.output_activation = nn.ReLU()
         self.min = config.min
         self.max_min_difference = config.max - config.min
-        self.network = Network(input_size, hidden_size, output_size, number_of_hidden_layers, nn.ReLU())
+        self.max_min_difference_squared = self.max_min_difference * self.max_min_difference
 
-    def forward(self, observation):
+    def get_action(self, obs_np, deterministic=False):
+        actions = self.get_actions(obs_np[None], deterministic=deterministic)
+        return actions[0, :], {}
+
+    def get_actions(self, obs_np, deterministic=False):
+        return eval_np(self, obs_np, deterministic=deterministic)[0]
+
+    def forward(self, observation, reparameterize=True, deterministic=False, return_log_prob=False):
         """
         Forward pass.
         Assumes input is a torch tensor.
 
         :type observation: torch.Tensor
         """
-        return self.generate_action(observation)
+        layer_input = observation
+        for fc in self.fcs:
+            layer_input = self.hidden_activation(fc(layer_input))
+        network_output = self.output_activation(self.last_fc(layer_input))
 
-    def get_action(self, observation):
-        """
-        Computes action from the given observation (state).
-        Assumes input is a numpy array.
-        """
-        observation_torch = torch.from_numpy(observation).float()
-        action_torch, _ = self.generate_action(observation_torch)
-        action_numpy = action_torch.detach().numpy()
-        return action_numpy
-
-    def generate_action(self, observation):
-        """
-        Computes action from observation (state).
-        Assumes input is a torch tensor.
-        """
-        # add epsilon to ensure that output is greater than zero
-        network_output = self.network(observation) + EPSILON
-        alpha = network_output[:, 0]
-        beta = network_output[:, 1]
+        alpha = network_output[:, 0].unsqueeze(1) + EPSILON
+        beta = network_output[:, 1].unsqueeze(1) + EPSILON
         distribution = Beta(alpha, beta)
-        sample = distribution.rsample()
+        distribution_mean = distribution.mean
+        if deterministic:
+            sample = distribution.rsample()
+        else:
+            sample = distribution_mean
+        print(sample.min(), sample.max())
         # transform to range (min, max)
         action = self.min + self.max_min_difference * sample
-        action.requires_grad_()
-        log_probability = distribution.log_prob(sample)
-        action = action.unsqueeze(1)
-        log_probability = log_probability.unsqueeze(1)
-        return action, log_probability
+        mean = self.min + self.max_min_difference * distribution_mean
+        variance = self.max_min_difference_squared * distribution.variance
+        std = torch.sqrt(variance)
+        log_std = torch.log(std)
+        log_prob = distribution.log_prob(sample)
+        entropy = distribution.entropy()
+        mean_action_log_prob = None
+        pre_tanh_value = None
+        return action, mean, log_std, log_prob, entropy, std, mean_action_log_prob, pre_tanh_value

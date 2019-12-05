@@ -1,37 +1,30 @@
-batch_size: 64
+batch_size: 128
 environment:
   type: debug
-  goal_position: 5
-  min_start_position: 0
-  max_start_position: 10
-environment_steps: 10
-# environment_steps: 100
-gradient_steps: 3
-iterations: 1000
+  goal_position: 5.0
+  goal_tolerance: 3.0
+  min_start_position: 0.0
+  max_start_position: 2.0
+environment_steps: 128
+gradient_steps: 50
+iterations: 200
 max_buffer_size: 100000
-max_trajectory_length: 30
-# max_trajectory_length: 80
+max_trajectory_length: 10
 model:
   discount_factor: 0.99
-  # exponential_weight: 0.005
-  exponential_weight: 0.001
+  exponential_weight: 0.005
   learning_rate_policy: 0.0003
   learning_rate_q: 0.0003
   network:
-    hidden_size: 64
+    hidden_size: 32
     number_of_hidden_layers: 2
-  reward_scale: 1.0
+  reward_scale: 3.0
 policy:
   type: range
-<<<<<<< Updated upstream
-  min: -1
-  max: 1
-=======
   # type: tanhgaussian
   min: -1.0
   max: 1.0
->>>>>>> Stashed changes
   network:
-    hidden_size: 64
+    hidden_size: 32
     number_of_hidden_layers: 2
-save_model: null
+save_model: saved_models/debug/

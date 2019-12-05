@@ -1,7 +1,13 @@
 from app.environments.environment import Environment
+from gym import spaces
 from math import exp
 import numpy as np
 from random import random
+
+ACTION_LOW = -100
+ACTION_HIGH = 100
+OBSERVATION_LOW = -1000
+OBSERVATION_HIGH = 1000
 
 class DebugEnvironment(Environment):
     """
@@ -14,60 +20,53 @@ class DebugEnvironment(Environment):
         """
         super(DebugEnvironment, self).__init__(config)
         self.config = config
-        self.epsilon = 10 ** -9
+        self.goal_position = config.goal_position
+        self.goal_tolerance = config.goal_tolerance
+        self.state = self.get_initial_state()
+        self.action_space = spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
+        self.observation_space = spaces.Box(low=OBSERVATION_LOW, high=OBSERVATION_HIGH, shape=(config.observation_size,), dtype=np.float)
 
     def get_initial_state(self):
         min_position = self.config.min_start_position
         max_position = self.config.max_start_position
-        # position = min_position + (max_position - min_position) * random()
-        # print("Current position: " + str(position))
-        position = 2
-        return np.array([position])
+        position = min_position + (max_position - min_position) * random()
+        initial_state = np.array([position, self.goal_position], dtype=np.float)
+        return initial_state
 
     def get_next_state(self, action):
-        return self.state + action
+        next_state = np.array([self.state[0] + action, self.state[1]], dtype=np.float)
+        return next_state
 
     def get_state(self):
         return self.state
 
     def is_terminal_state(self, state):
-        return abs(state[0] - self.config.goal_position) < self.epsilon
+        return abs(state[0] - self.goal_position) < self.goal_tolerance
+
+    def render(self):
+        pass
 
     def reset(self):
         self.state = self.get_initial_state()
-
-    # def reward(self, state, action, next_state):
-    #     distance_to_goal = abs(next_state[0] - self.config.goal_position)
-    #     similarity_to_goal = exp(-distance_to_goal)
-    #     return similarity_to_goal
+        return self.state
 
     def reward(self, state, action, next_state):
-        new_distance_to_goal = abs(next_state[0] - self.config.goal_position)
-        old_distance_to_goal = abs(state[0] - self.config.goal_position)
-        distance = old_distance_to_goal - new_distance_to_goal 
-        direction = 0
-        # ext = 1
-        ext = 10
-        gam = 0.1
-        if distance < 0:
-            direction = 1
-        if direction == 1:
-            # similarity_to_goal = exp((ext - gam * new_distance_to_goal)) ### When future position is closer to the target
-            similarity_to_goal = exp(-gam * new_distance_to_goal)
-        else:
-            # similarity_to_goal = exp((- ext - gam * new_distance_to_goal)) ### When future position is further from the target
-            similarity_to_goal = -exp(gam * new_distance_to_goal)
-        return similarity_to_goal
+        distance_to_goal = abs(state[0] - self.goal_position)
+        next_distance_to_goal = abs(next_state[0] - self.goal_position)
+        next_similarity_to_goal = exp(-next_distance_to_goal)
+        if self.is_terminal_state(next_state):
+            return (distance_to_goal - next_distance_to_goal) + 1
+        return (distance_to_goal - next_distance_to_goal) + next_similarity_to_goal
 
     def step(self, action):
         """
         Finds the next state in the simulated environmet.
 
         :param action: action performed in current environment
-        :return: (next state, reward)
+        :return: (next state, reward, terminal, info)
         """
         next_state = self.get_next_state(action)
         reward = self.reward(self.state, action, next_state)
-        terminal = self.is_terminal_state(next_state)
+        done = self.is_terminal_state(next_state)
         self.state = next_state
-        return next_state, reward, terminal
+        return next_state, reward, done, {}

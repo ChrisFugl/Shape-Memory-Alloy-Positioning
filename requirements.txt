@@ -1,8 +1,5 @@
-<<<<<<< Updated upstream
-=======
 ygtimer>=1.0.0b5
 gym>=0.15.4
->>>>>>> Stashed changes
 ipykernel>=5.1.3
 matplotlib>=3.0.3
 numpy>=1.17.3
