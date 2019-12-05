@@ -20,6 +20,7 @@ save_model: str(required=False)
 environment_debug:
   type: enum('debug')
   goal_position: num(required=False)
+  goal_tolerance: num(min=0, required=False)
   min_start_position: num(required=False)
   max_start_position: num(required=False)
 ---
