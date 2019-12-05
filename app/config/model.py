@@ -8,7 +8,9 @@ class ModelConfig:
         learning_rate_policy=0.0001,
         learning_rate_q=0.0001,
         network,
-        reward_scale=1.0
+        reward_scale=1.0,
+        target_update_period=1,
+        use_automatic_entropy_tuning=True
     ):
         self.discount_factor = discount_factor
         self.exponential_weight = exponential_weight
@@ -16,6 +18,8 @@ class ModelConfig:
         self.learning_rate_q = learning_rate_q
         self.network = NetworkConfig(**network)
         self.reward_scale = reward_scale
+        self.target_update_period = target_update_period
+        self.use_automatic_entropy_tuning = use_automatic_entropy_tuning
 
     def __str__(self):
         return (f'Model(\n'
@@ -25,5 +29,6 @@ class ModelConfig:
              + f'    learning_rate_q = {self.learning_rate_q}\n'
              + f'    network = {self.network}\n'
              + f'    reward_scale = {self.reward_scale}\n'
-             + f'    temperature = {self.temperature}\n'
+             + f'    target_update_period = {self.target_update_period}\n',
+             + f'    use_automatic_entropy_tuning = {self.use_automatic_entropy_tuning}\n',
              + '  )')

@@ -5,11 +5,13 @@ environment: any(
   include('environment_simulated'),
   include('environment_test'),
   )
-environment_steps: int(required=False)
+exploration_steps: int(required=False)
+evaluation_steps: int(required=False)
 gradient_steps: int(required=False)
 iterations: int(required=False)
 max_buffer_size: int(min=1, required=False)
 max_trajectory_length: int(min=1, required=False)
+min_num_steps_before_training: int(min=0, required=False)
 model: include('model')
 policy: any(
   include('policy_categorical'),
@@ -78,6 +80,8 @@ model:
   learning_rate_q: num(required=False)
   network: include('network')
   reward_scale: num(min=0, required=False)
+  target_update_period: int(min=1, required=False)
+  use_automatic_entropy_tuning: bool(required=False)
 ---
 network:
   hidden_size: int(min=1, required=False)
