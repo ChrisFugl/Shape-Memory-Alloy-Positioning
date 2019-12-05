@@ -10,20 +10,33 @@ class EnvironmentConfig:
 
 class DebugEnvironmentConfig(EnvironmentConfig):
 
-    def __init__(self, *, min_start_position=0, max_start_position=100, goal_position=50, goal_tolerance=10 ** -2):
+    def __init__(self, *,
+        min_start_position=0,
+        max_start_position=100,
+        goal_position=50,
+        goal_tolerance=10 ** -2,
+        pass_scale_interval_to_policy=True,
+        scale_action=False,
+    ):
         """
         :type float: min_start_position
         :type float: max_start_position
         :type float: goal_position
         :type float: goal_tolerance
+        :type bool: pass_scale_interval_to_policy
+        :type bool: scale_action
         """
         observation_size = 2
+        if scale_action and pass_scale_interval_to_policy:
+            observation_size += 2
         action_size = 1
         super(DebugEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
         self.min_start_position = min_start_position
         self.max_start_position = max_start_position
         self.goal_position = goal_position
         self.goal_tolerance = goal_tolerance
+        self.pass_scale_interval_to_policy = pass_scale_interval_to_policy
+        self.scale_action = scale_action
 
 class RealTimeEnvironmentConfig(EnvironmentConfig):
 

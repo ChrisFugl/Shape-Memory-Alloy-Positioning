@@ -58,7 +58,6 @@ class RangePolicy(Mlp, ExplorationPolicy):
             sample = distribution.rsample()
         else:
             sample = distribution_mean
-        print(sample.min(), sample.max())
         # transform to range (min, max)
         action = self.min + self.max_min_difference * sample
         mean = self.min + self.max_min_difference * distribution_mean

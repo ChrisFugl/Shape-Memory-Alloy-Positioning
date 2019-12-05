@@ -28,6 +28,8 @@ environment_debug:
   goal_tolerance: num(min=0, required=False)
   min_start_position: num(required=False)
   max_start_position: num(required=False)
+  pass_scale_interval_to_policy: bool(required=False)
+  scale_action: bool(required=False)
 ---
 environment_real_time:
   type: enum('real_time')
