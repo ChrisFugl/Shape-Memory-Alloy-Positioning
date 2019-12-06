@@ -77,7 +77,7 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type max_voltage: float
         """
         action_size = 1
-        observation_size = 4
+        observation_size = 3
         if pass_scale_interval_to_policy:
             observation_size += 2
         super(RealTimeEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
@@ -102,6 +102,7 @@ class SimulatedEnvironmentConfig(EnvironmentConfig):
 
     def __init__(self, *,
         final_position=0.05,
+        goal_tolerance=0.01,
         initial_deflection=0,
         initial_force=0,
         initial_martensitic_fraction_of_detwinned_martensite=1,
@@ -137,6 +138,7 @@ class SimulatedEnvironmentConfig(EnvironmentConfig):
         self.critical_detwinning_starting_stress = critical_detwinning_starting_stress
         self.delta_max = delta_max
         self.final_position = final_position
+        self.goal_tolerance = goal_tolerance
         self.force_applied = force_applied
         self.initial_deflection = initial_deflection
         self.initial_force = initial_force

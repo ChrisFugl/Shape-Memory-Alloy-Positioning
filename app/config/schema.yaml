@@ -56,6 +56,7 @@ environment_real_time:
 environment_simulated:
   type: enum('simulated')
   final_position: num(min=0, required=True)
+  goal_tolerance: num(min=0, required=False)
   initial_deflection: num(required=False)
   initial_force: num(required=False)
   initial_martensitic_fraction_of_detwinned_martensite: num(required=False)

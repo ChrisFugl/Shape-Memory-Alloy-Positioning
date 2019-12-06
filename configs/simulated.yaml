@@ -1,4 +1,15 @@
 batch_size: 256
+collect_actions: true
+collect_actions_every: 100
+exploration_steps: 128
+evaluation_steps: 32
+gradient_steps: 128
+iterations: -1
+max_buffer_size: 1000000
+max_trajectory_length: 15
+min_num_steps_before_training: 0
+save_checkpoint_interval_s: 3600
+save_model: saved_models/simulated/
 environment:
   type: simulated
   austenite_shear_modulus: 100000000000
@@ -25,23 +36,19 @@ environment:
   spring_diameter: 0.0025
   twinned_martensite_shear_modulus: 50000000000
   wire_diameter: 0.0005
-environment_steps: 10
-gradient_steps: 1
-iterations: 100000
-max_buffer_size: 100000
-max_trajectory_length: 30
 model:
   discount_factor: 0.99
   exponential_weight: 0.005
-  learning_rate_policy: 0.0001
-  learning_rate_q: 0.0001
+  learning_rate_policy: 0.0003
+  learning_rate_q: 0.0003
   network:
     hidden_size: 32
     number_of_hidden_layers: 2
   reward_scale: 3.0
+  target_update_period: 1
+  use_automatic_entropy_tuning: true
 policy:
-  type: gaussian
+  type: tanh_gaussian
   network:
     hidden_size: 32
     number_of_hidden_layers: 2
-save_model: null

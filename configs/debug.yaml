@@ -1,6 +1,6 @@
 batch_size: 256
 collect_actions: true
-collect_actions_every: 20
+collect_actions_every: 100
 exploration_steps: 128
 evaluation_steps: 32
 gradient_steps: 128

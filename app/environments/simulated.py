@@ -1,7 +1,17 @@
 from app.environments.environment import Environment
+from gym import spaces
 from math import cos, exp, pi
 import numpy as np
 from scipy.spatial import distance
+
+ACTION_LOW = -5.0
+ACTION_HIGH = 5.0
+DEFLECTION_LOW = 0.0
+DEFLECTION_HIGH = 100.0
+TEMP_LOW = 0.0
+TEMP_HIGH = 100.0
+FORCE_LOW = 0.0
+FORCE_HIGH = 10.0
 
 class SimulatedEnvironment(Environment):
     """
@@ -9,8 +19,8 @@ class SimulatedEnvironment(Environment):
 
     state consists of:
         * temperature
+        * temperature change
         * deflection
-        * position
 
     action consists of:
         * temperature change
@@ -40,15 +50,20 @@ class SimulatedEnvironment(Environment):
         self.martensite_cos_ratio = pi / critical_detwinning_stress_difference
         self.austenite_temperature_difference = config.austenitic_finish_temperature - config.austenitic_start_temperature
         self.config = config
-        self.state = self.get_initial_state()
+
+        self.action_space = spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
+        self.observation_space = spaces.Box(
+            low=np.array([TEMP_LOW, ACTION_LOW, DEFLECTION_LOW]),
+            high=np.array([TEMP_HIGH, ACTION_HIGH, DEFLECTION_HIGH]),
+            dtype=np.float)
 
     def get_initial_state(self):
-        return [
+        return np.array([
             self.config.initial_temperature, # temperature
             0, # temperature change
             self.config.initial_deflection, # deflection
             # self.config.initial_position # position (meter),
-        ]
+        ], dtype=np.float)
 
     def get_next_state(self, action):
         """
@@ -72,11 +87,6 @@ class SimulatedEnvironment(Environment):
         # it is a bad practice to multiply by an unanmed constant (here 55)
         # we should assign this to a variable and give it a good descriptive name
         displacement_next = sigma * self.config.max_recoverable_deflection * 55
-
-        # find next position
-        # position_next = position * displacement_next
-
-        # return np.array([temperature_next, displacement_next, position_next], dtype=np.float)
         return np.array([temperature_next, next_temperature_change, displacement_next], dtype=np.float)
 
     def get_state(self):
@@ -107,12 +117,18 @@ class SimulatedEnvironment(Environment):
             multiplier = multiplier + 1
             return multiplicand * multiplier
 
+    def is_in_goal(self, position):
+        return abs(position - self.config.final_position) < self.config.goal_tolerance
+
     def is_terminal_state(self, state):
-        epsilon = 10 ** -8
-        return abs(state[2] - self.config.final_position) < epsilon
+        return self.is_in_goal(state[2])
+
+    def render(self):
+        pass
 
     def reset(self):
         self.state = self.get_initial_state()
+        return self.state
 
     def reward(self, state, action, next_state):
         """
@@ -123,14 +139,18 @@ class SimulatedEnvironment(Environment):
         :param next_state: next state observed after applying action in current state
         :return: reward
         """
-        # TODO: include speed towards goal position?
-        # _, _, displacement = state
-        _, _, displacement_next = next_state
-        # goal_distance = distance.euclidean([displacement], [self.config.final_position])
-        next_goal_distance = distance.euclidean([displacement_next], [self.config.final_position])
-        next_goal_similarity = exp(- next_goal_distance)
-        # return (next_goal_distance - goal_distance) * next_goal_similarity
-        return next_goal_similarity
+        position = state[2]
+        next_position = next_state[2]
+        distance_to_goal = abs(position - self.config.final_position)
+        next_distance_to_goal = abs(next_position- self.config.final_position)
+        distance_difference = distance_to_goal - next_distance_to_goal
+        if self.is_in_goal(next_position):
+            next_similarity_to_goal = 1
+        else:
+            next_similarity_to_min_goal = exp(-abs(next_position - (self.config.final_position - self.config.goal_tolerance)))
+            next_similarity_to_max_goal = exp(-abs(next_position - (self.config.final_position + self.config.goal_tolerance)))
+            next_similarity_to_goal = max(next_similarity_to_min_goal, next_similarity_to_max_goal)
+        return distance_difference + next_similarity_to_goal
 
     def step(self, action):
         """
@@ -143,4 +163,4 @@ class SimulatedEnvironment(Environment):
         reward = self.reward(self.state, action, next_state)
         terminal = self.is_terminal_state(next_state)
         self.state = next_state
-        return next_state, reward, terminal
+        return next_state, reward, terminal, {}
