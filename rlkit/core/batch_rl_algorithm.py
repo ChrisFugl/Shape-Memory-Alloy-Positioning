@@ -1,6 +1,7 @@
 import abc
 
 import gtimer as gt
+import itertools
 from rlkit.core.rl_algorithm import BaseRLAlgorithm
 from rlkit.data_management.replay_buffer import ReplayBuffer
 from rlkit.samplers.data_collector import PathCollector
@@ -51,10 +52,13 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
 
-        for epoch in gt.timed_for(
-                range(self._start_epoch, self.num_epochs),
-                save_itrs=True,
-        ):
+        # interpret a negative number of epochs as an infinite training (until manually stopped)
+        if self.num_epochs < 0:
+            iterable_epoch = itertools.count(self._start_epoch)
+        else:
+            iterable_epoch = range(self._start_epoch, self.num_epochs)
+
+        for epoch in gt.timed_for(iterable_epoch, save_itrs=True):
             self.eval_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.num_eval_steps_per_epoch,
