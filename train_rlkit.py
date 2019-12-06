@@ -13,6 +13,9 @@ from rlkit.torch.networks import FlattenMlp
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 import sys
 import yamale
+import os
+import torch
+import pickle
 
 CONFIG_SCHEMA_PATH = 'app/config/schema.yaml'
 
@@ -21,6 +24,7 @@ def main():
     arguments = sys.argv[1:]
     options = parse_arguments(arguments)
     config = load_config(options.config)
+    load_iter = options.load
     exploration_environment = get_environment(config.environment_type, config.environment)
     evaluation_environment = get_environment(config.environment_type, config.environment)
     policy = get_policy(config.policy_type, config.policy, evaluation_environment)
@@ -51,12 +55,19 @@ def main():
     )
     setup_logger(options.name, variant=variant)
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    experiment(variant, exploration_environment, evaluation_environment, policy)
+
+    ckp_path = os.path.join(os.getcwd(), 'checkpoints')
+
+    if not os.path.exists(ckp_path):
+        os.mkdir(ckp_path)
+
+    experiment(variant, exploration_environment, evaluation_environment, policy, ckp_path, load_iter)
 
 
 def parse_arguments(arguments):
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, help='path to config file')
+    parser.add_argument('load', type=str, default = None, nargs='*', help='data from given iteration will be loaded')
     parser.add_argument(
         '-name',
         type=str,
@@ -74,7 +85,8 @@ def load_config(config_path):
     return config
 
 
-def experiment(variant, expl_env, eval_env, policy):
+def experiment(variant, expl_env, eval_env, policy, checkpoint_dir, load_iter):
+
     print(f'Environment: {expl_env.name}')
     print(f'Policy: {policy.name}')
 
@@ -83,37 +95,87 @@ def experiment(variant, expl_env, eval_env, policy):
     obs_dim = expl_env.observation_size
     action_dim = eval_env.action_size
 
-    layer_size = variant['layer_size']
-    number_of_layers = variant['number_of_layers']
-    hidden_sizes = [layer_size] * number_of_layers
-    q_input_size = obs_dim + action_dim
-    q_output_size = 1
-    qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
-    qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
-    target_qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
-    target_qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
-    eval_policy = MakeDeterministic(policy)
-    eval_path_collector = MdpPathCollector(eval_env, eval_policy)
-    expl_path_collector = MdpPathCollector(expl_env, policy)
-    replay_buffer = EnvReplayBuffer(variant['replay_buffer_size'], expl_env)
-    trainer = SACTrainer(
-        env=eval_env,
-        policy=policy,
-        qf1=qf1,
-        qf2=qf2,
-        target_qf1=target_qf1,
-        target_qf2=target_qf2,
-        **variant['trainer_kwargs']
-    )
-    algorithm = TorchBatchRLAlgorithm(
-        trainer=trainer,
-        exploration_env=expl_env,
-        evaluation_env=eval_env,
-        exploration_data_collector=expl_path_collector,
-        evaluation_data_collector=eval_path_collector,
-        replay_buffer=replay_buffer,
-        **variant['algorithm_kwargs']
-    )
+    if load_iter:
+
+        load_dir = os.path.join(checkpoint_dir, 'iteration_' + load_iter[0])
+
+        qf1 = torch.load(os.path.join(load_dir, 'q1'))
+        qf2 = torch.load(os.path.join(load_dir, 'q2'))
+        target_qf1 = torch.load(os.path.join(load_dir, 'target_q1'))
+        target_qf2 = torch.load(os.path.join(load_dir, 'target_q2'))
+        policy = torch.load(os.path.join(load_dir, 'policy'))
+        eval_policy = MakeDeterministic(policy)
+        eval_path_collector = MdpPathCollector(
+            eval_env,
+            eval_policy,
+        )
+        expl_path_collector = MdpPathCollector(
+            expl_env,
+            policy,
+        )
+
+        with open(os.path.join(load_dir, 'replay_buffer.p'), 'rb') as f:
+            attr_dict = pickle.load(f)
+        replay_buffer = EnvReplayBuffer(
+            variant['replay_buffer_size'],
+            expl_env,
+            attr_dict,
+        )
+
+        trainer = SACTrainer(
+            env=eval_env,
+            policy=policy,
+            qf1=qf1,
+            qf2=qf2,
+            target_qf1=target_qf1,
+            target_qf2=target_qf2,
+            **variant['trainer_kwargs']
+        )
+        algorithm = TorchBatchRLAlgorithm(
+            trainer=trainer,
+            exploration_env=expl_env,
+            evaluation_env=eval_env,
+            exploration_data_collector=expl_path_collector,
+            evaluation_data_collector=eval_path_collector,
+            replay_buffer=replay_buffer,
+            save_dir = checkpoint_dir,
+            **variant['algorithm_kwargs']
+        )
+
+
+    else:
+        layer_size = variant['layer_size']
+        number_of_layers = variant['number_of_layers']
+        hidden_sizes = [layer_size] * number_of_layers
+        q_input_size = obs_dim + action_dim
+        q_output_size = 1
+        qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+        qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+        target_qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+        target_qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+        eval_policy = MakeDeterministic(policy)
+        eval_path_collector = MdpPathCollector(eval_env, eval_policy)
+        expl_path_collector = MdpPathCollector(expl_env, policy)
+        replay_buffer = EnvReplayBuffer(variant['replay_buffer_size'], expl_env)
+        trainer = SACTrainer(
+            env=eval_env,
+            policy=policy,
+            qf1=qf1,
+            qf2=qf2,
+            target_qf1=target_qf1,
+            target_qf2=target_qf2,
+            **variant['trainer_kwargs']
+        )
+        algorithm = TorchBatchRLAlgorithm(
+            trainer=trainer,
+            exploration_env=expl_env,
+            evaluation_env=eval_env,
+            exploration_data_collector=expl_path_collector,
+            evaluation_data_collector=eval_path_collector,
+            replay_buffer=replay_buffer,
+            save_dir = checkpoint_dir,
+            **variant['algorithm_kwargs']
+        )
     algorithm.to(ptu.device)
     algorithm.train()
 

@@ -13,21 +13,40 @@ class SimpleReplayBuffer(ReplayBuffer):
         observation_dim,
         action_dim,
         env_info_sizes,
+        attr_dict = None,
     ):
-        self._observation_dim = observation_dim
-        self._action_dim = action_dim
-        self._max_replay_buffer_size = max_replay_buffer_size
-        self._observations = np.zeros((max_replay_buffer_size, observation_dim))
-        # It's a bit memory inefficient to save the observations twice,
-        # but it makes the code *much* easier since you no longer have to
-        # worry about termination conditions.
-        self._next_obs = np.zeros((max_replay_buffer_size, observation_dim))
-        self._actions = np.zeros((max_replay_buffer_size, action_dim))
-        # Make everything a 2D np array to make it easier for other code to
-        # reason about the shape of the data
-        self._rewards = np.zeros((max_replay_buffer_size, 1))
-        # self._terminals[i] = a terminal was received at time i
-        self._terminals = np.zeros((max_replay_buffer_size, 1), dtype='uint8')
+
+        if attr_dict:
+            self._observation_dim = attr_dict['observation_dim']
+            self._action_dim = attr_dict['action_dim']
+            self._max_replay_buffer_size = attr_dict['max_replay_buffer_size']
+            self._observations = attr_dict['observations']
+            self._next_obs = attr_dict['next_obs']
+            self._actions = attr_dict['actions']
+            self._rewards = attr_dict['rewards']
+            self._terminals = attr_dict['terminals']
+            self._top = attr_dict['top']
+            self._size = attr_dict['size']
+
+        else:
+            self._observation_dim = observation_dim
+            self._action_dim = action_dim
+            self._max_replay_buffer_size = max_replay_buffer_size
+            self._observations = np.zeros((max_replay_buffer_size, observation_dim))
+            # It's a bit memory inefficient to save the observations twice,
+            # but it makes the code *much* easier since you no longer have to
+            # worry about termination conditions.
+            self._next_obs = np.zeros((max_replay_buffer_size, observation_dim))
+            self._actions = np.zeros((max_replay_buffer_size, action_dim))
+            # Make everything a 2D np array to make it easier for other code to
+            # reason about the shape of the data
+            self._rewards = np.zeros((max_replay_buffer_size, 1))
+            # self._terminals[i] = a terminal was received at time i
+            self._terminals = np.zeros((max_replay_buffer_size, 1), dtype='uint8')
+
+            self._top = 0
+            self._size = 0
+
         # Define self._env_infos[key][i] to be the return value of env_info[key]
         # at time i
         self._env_infos = {}
@@ -35,9 +54,7 @@ class SimpleReplayBuffer(ReplayBuffer):
             self._env_infos[key] = np.zeros((max_replay_buffer_size, size))
         self._env_info_keys = env_info_sizes.keys()
 
-        self._top = 0
-        self._size = 0
-
+        
     def add_sample(self, observation, action, reward, next_observation,
                    terminal, env_info, **kwargs):
         self._observations[self._top] = observation

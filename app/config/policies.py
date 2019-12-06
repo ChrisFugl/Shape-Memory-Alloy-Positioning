@@ -49,6 +49,7 @@ class TanhGaussianPolicyConfig(PolicyConfig):
              + f'    network = {self.network}\n'
              + '  )')
 
+
 class TestPolicyConfig(PolicyConfig):
 
     def __init__(self, *, change):

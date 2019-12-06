@@ -1,0 +1,21 @@
+Iteration: 0 / 500
+Traceback (most recent call last):
+  File "train.py", line 148, in <module>
+    main()
+  File "train.py", line 32, in main
+    train(model, replay_buffer, environment, config, writer)
+  File "train.py", line 117, in train
+    terminals=torch.from_numpy(batch_numpy.terminals).float())
+  File "/home/shkoh/sma/app/model.py", line 46, in train_batch
+    policy_actions, policy_log_probability = self.policy(observations)
+  File "/home/shkoh/anaconda3/envs/python3.6/lib/python3.6/site-packages/torch/nn/modules/module.py", line 541, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/shkoh/sma/app/policies/tanhgaussian.py", line 85, in forward
+    h = self.hidden_activation(fc(h))
+  File "/home/shkoh/anaconda3/envs/python3.6/lib/python3.6/site-packages/torch/nn/modules/module.py", line 541, in __call__
+    result = self.forward(*input, **kwargs)
+  File "/home/shkoh/anaconda3/envs/python3.6/lib/python3.6/site-packages/torch/nn/modules/linear.py", line 87, in forward
+    return F.linear(input, self.weight, self.bias)
+  File "/home/shkoh/anaconda3/envs/python3.6/lib/python3.6/site-packages/torch/nn/functional.py", line 1370, in linear
+    ret = torch.addmm(bias, input, weight.t())
+KeyboardInterrupt

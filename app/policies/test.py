@@ -7,7 +7,7 @@ class TestPolicy(Policy):
 
     name = 'test'
 
-    def __init__(self, config, environment):
+    def __init__(self, config, envionment):
         """
         :type config: app.config.policies.TestPolicyConfig
         :type environment: app.config.environments.EnvironmentConfig
