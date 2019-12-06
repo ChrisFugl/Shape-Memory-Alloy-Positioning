@@ -5,3 +5,5 @@ runs/
 saved_models/
 data/
 checkpoints/
+*.ipynb
+.ipynb_checkpoints/

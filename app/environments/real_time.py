@@ -4,12 +4,10 @@ import socket
 import struct
 import time
 
-ACTION_LOW = 0
-ACTION_HIGH = 12
+ACTION_LOW = 0.0
 OBSERVATION_LOW = -1000
 OBSERVATION_HIGH = 1000
 POSITION_LOW = 0
-POSITION_HIGH = 0.5
 TEMP_LOW = 20
 TEMP_HIGH = 100
 FORCE_LOW = 5
@@ -48,13 +46,18 @@ class RealTimeEnvironment(Environment):
         self.goal_time_tolerance_s = config.goal_time_tolerance_s
         self.scale_action = config.scale_action
         self.pass_scale_interval_to_policy = config.pass_scale_interval_to_policy
+        self.max_position = config.max_position
+        self.max_exponential_threshold = config.max_exponential_threshold
+        self.max_voltage = config.max_voltage
+        self.max_threshold_position_ratio = self.max_exponential_threshold / self.max_position
+        self.max_position_threshold_distance_exp = exp(abs(self.max_exponential_threshold - self.max_position))
         self.action_space = spaces.Box(
-            low=ACTION_LOW, 
-            high=ACTION_HIGH, 
+            low=ACTION_LOW,
+            high=self.max_voltage,
             dtype=np.float)
         self.observation_space = spaces.Box(
-            low=[TEMP_LOW, POSITION_LOW, FORCE_LOW, POSITION_LOW, ACTION_LOW, ACTION_LOW], 
-            high=[TEMP_HIGH, POSITION_HIGH, FORCE_HIGH, POSITION_HIGH, ACTION_HIGH, ACTION_HIGH], 
+            low=[TEMP_LOW, POSITION_LOW, FORCE_LOW, POSITION_LOW, ACTION_LOW, ACTION_LOW],
+            high=[TEMP_HIGH, self.max_position, FORCE_HIGH, self.max_position, self.max_voltage, self.max_voltage],
             dtype=np.float)
 
         if config.port_read == config.port_write:
@@ -162,11 +165,28 @@ class RealTimeEnvironment(Environment):
     def get_scaled_action(self, position, action):
         min, max = self.get_action_interval(position)
         # transform to interval (0, 1)
-        action_normalized = (action - ACTION_LOW) / (ACTION_HIGH - ACTION_LOW)
+        action_normalized = (action - ACTION_LOW) / (self.max_voltage - ACTION_LOW)
         # transform to interval (min, max)
         action_scaled = min + (max - min) * action_normalized
         return action_scaled
 
-    ### Subject to change
     def get_action_interval(self, position):
-        return (ACTION_LOW, ACTION_HIGH)
+        """
+        Compute min and max voltage.
+
+        Minimum should always be at 0.
+        Maximum is linear interpolated as a function of the position until it reaches a configurable threshold.
+        It interpolates exponentially from the threshold and until the maximum position.
+        Maximum voltage is 0 in the (theoretical) case that position is greater than maximum position.
+        """
+        if position <= self.max_exponential_threshold:
+            max_position_ratio = position / max_position
+            max_voltage = ACTION_LOW + (self.max_voltage - ACTION_LOW) * (1.0 - self.max_position_ratio)
+        elif position >= self.max_position:
+            max_voltage = 0.0
+        else:
+            max_voltage_at_threshold = ACTION_LOW + (self.max_voltage - ACTION_LOW) * (1.0 - self.max_threshold_position_ratio)
+            distance_to_max_position = abs(position - self.max_position)
+            distance_ratio = exp(distance_to_max_position) / self.max_position_threshold_distance_exp
+            max_voltage = max_voltage_at_threshold * distance_ratio
+        return ACTION_LOW, max_voltage

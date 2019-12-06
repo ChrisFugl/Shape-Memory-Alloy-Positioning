@@ -51,9 +51,12 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         port_write,
         values_per_observation,
         goal_tolerance=0.01,
-        goal_time_tolerance_s=2,
+        goal_time_tolerance_s=2.0,
         scale_action=True,
-        pass_scale_interval_to_policy=True
+        pass_scale_interval_to_policy=True,
+        max_position,
+        max_exponential_threshold,
+        max_voltage,
     ):
         """
         :type action_decimal_precision: float
@@ -66,6 +69,12 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type port_write: int
         :type values_per_observation: int
         :type goal_tolerance: float
+        :type goal_time_tolerance_s: float
+        :type scale_action: bool
+        :type pass_scale_interval_to_policy: bool
+        :type max_position: float
+        :type max_exponential_threshold: float
+        :type max_voltage: float
         """
         action_size = 1
         observation_size = 4
@@ -85,6 +94,9 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         self.goal_time_tolerance_s = goal_time_tolerance_s
         self.scale_action = scale_action
         self.pass_scale_interval_to_policy = pass_scale_interval_to_policy
+        self.max_position = max_position
+        self.max_exponential_threshold = max_exponential_threshold
+        self.max_voltage = max_voltage
 
 class SimulatedEnvironmentConfig(EnvironmentConfig):
 
