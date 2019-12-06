@@ -20,6 +20,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from rlkit.core.tabulate import tabulate
 
+import time
+
 
 class TerminalTablePrinter(object):
     def __init__(self):
@@ -248,6 +250,7 @@ class Logger(object):
             self.record_tabular(prefix + "Median" + suffix, np.median(values))
             self.record_tabular(prefix + "Min" + suffix, np.min(values))
             self.record_tabular(prefix + "Max" + suffix, np.max(values))
+
         else:
             self.record_tabular(prefix + "Average" + suffix, np.nan)
             self.record_tabular(prefix + "Std" + suffix, np.nan)
@@ -269,8 +272,11 @@ class Logger(object):
             # write to tensorboard
             epoch = tabular_dict['Epoch']
             for name, value in tabular_dict.items():
-                if name != 'Epoch':
+                if name != 'Epoch': 
                     self._tensorboard_writer.add_scalar(name, float(value), epoch)
+                if name.split()[0] == 'exploration/Actions':
+                    self._tensorboard_writer.add_histogram('histogram/' + name, float(value), epoch)
+                    
             # Also write to the csv files
             # This assumes that the keys in each iteration won't change!
             for tabular_fd in list(self._tabular_fds.values()):
