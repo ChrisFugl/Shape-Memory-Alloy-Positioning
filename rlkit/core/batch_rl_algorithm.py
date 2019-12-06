@@ -31,6 +31,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             num_trains_per_train_loop,
             num_train_loops_per_epoch=1,
             min_num_steps_before_training=0,
+            save_checkpoint_interval_s=1800,
     ):
         super().__init__(
             trainer,
@@ -50,7 +51,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         self.num_train_loops_per_epoch = num_train_loops_per_epoch
         self.num_expl_steps_per_train_loop = num_expl_steps_per_train_loop
         self.min_num_steps_before_training = min_num_steps_before_training
-        self.save_time = 20
+        self.save_time = save_checkpoint_interval_s
         self.save_dir = save_dir
 
     def _train(self):

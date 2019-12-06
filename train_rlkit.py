@@ -44,6 +44,7 @@ def main():
             num_expl_steps_per_train_loop=config.exploration_steps,
             min_num_steps_before_training=config.min_num_steps_before_training,
             max_path_length=config.max_trajectory_length,
+            save_checkpoint_interval_s=config.save_checkpoint_interval_s,
         ),
         trainer_kwargs=dict(
             discount=config.model.discount_factor,

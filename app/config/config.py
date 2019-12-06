@@ -34,7 +34,8 @@ class Config:
         min_num_steps_before_training=0,
         model,
         policy,
-        save_model=None
+        save_checkpoint_interval_s=1800,
+        save_model=None,
     ):
         environment_type = environment.pop('type')
         environment_class = _environment_classes[environment_type]
@@ -54,6 +55,7 @@ class Config:
         self.min_num_steps_before_training = min_num_steps_before_training
         self.model = ModelConfig(**model)
         self.policy = policy_class(**policy)
+        self.save_checkpoint_interval_s=save_checkpoint_interval_s
         self.save_model = save_model
 
         self.environment_type = environment_type
@@ -74,5 +76,6 @@ class Config:
              + f'  min_num_steps_before_training = {self.min_num_steps_before_training}\n'
              + f'  model = {self.model}\n'
              + f'  policy = {self.policy}\n'
+             + f'  save_checkpoint_interval_s = {self.save_checkpoint_interval_s}\n'
              + f'  save_model = {self.save_model}\n'
              + ')')

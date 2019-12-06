@@ -9,6 +9,7 @@ max_buffer_size: int(min=1, required=False)
 max_trajectory_length: int(min=1, required=False)
 min_num_steps_before_training: int(min=0, required=False)
 save_model: str(required=False)
+save_checkpoint_interval_s: int(min=1, required=False)
 model: include('model')
 environment: any(
   include('environment_debug'),
