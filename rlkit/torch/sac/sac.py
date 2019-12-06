@@ -206,6 +206,7 @@ class SACTrainer(TorchTrainer):
     def end_epoch(self, epoch):
         self._need_to_update_eval_statistics = True
 
+
     @property
     def networks(self):
         return [
@@ -219,8 +220,22 @@ class SACTrainer(TorchTrainer):
     def get_snapshot(self):
         return dict(
             policy=self.policy,
-            qf1=self.qf1,
-            qf2=self.qf2,
-            target_qf1=self.qf1,
-            target_qf2=self.qf2,
+            q1=self.qf1,
+            q2=self.qf2,
+            target_q1=self.qf1,
+            target_q2=self.qf2,
         )
+
+    def get_snapshot_opt(self):
+        return dict(
+            policy_opt = self.policy_optimizer,
+            q1_opt = self.qf1_optimizer,
+            q2_opt = self.qf2_optimizer,
+            alpha_opt = self.alpha_optimizer,
+        )
+
+
+
+
+
+

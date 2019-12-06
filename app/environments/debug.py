@@ -77,7 +77,6 @@ class DebugEnvironment(Environment):
     def step(self, action):
         """
         Finds the next state in the simulated environmet.
-
         :param action: action performed in current environment
         :return: (next state, reward, terminal, info)
         """

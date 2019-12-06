@@ -4,3 +4,4 @@ notebooks/
 runs/
 saved_models/
 data/
+checkpoints/

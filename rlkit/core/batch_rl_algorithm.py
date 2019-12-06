@@ -6,6 +6,10 @@ from rlkit.core.rl_algorithm import BaseRLAlgorithm
 from rlkit.data_management.replay_buffer import ReplayBuffer
 from rlkit.samplers.data_collector import PathCollector
 
+import time
+import os
+import pickle
+import torch
 
 class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
     def __init__(
@@ -18,6 +22,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             replay_buffer: ReplayBuffer,
             collect_actions,
             collect_actions_every,
+            save_dir,
             batch_size,
             max_path_length,
             num_epochs,
@@ -45,8 +50,12 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         self.num_train_loops_per_epoch = num_train_loops_per_epoch
         self.num_expl_steps_per_train_loop = num_expl_steps_per_train_loop
         self.min_num_steps_before_training = min_num_steps_before_training
+        self.save_time = 20
+        self.save_dir = save_dir
 
     def _train(self):
+        start_time = time.time()
+
         if self.min_num_steps_before_training > 0:
             init_expl_paths = self.expl_data_collector.collect_new_paths(
                 self.max_path_length,
@@ -88,5 +97,18 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                     self.trainer.train(train_data)
                 gt.stamp('training', unique=False)
                 self.training_mode(False)
+
+            cur_time = time.time()
+            if cur_time - start_time > self.save_time:
+                ckp_path = os.path.join(self.save_dir, 'iteration_' + str(epoch))
+                if not os.path.exists(ckp_path):
+                    os.mkdir(ckp_path)
+                for k, v in self.trainer.get_snapshot().items():
+                    torch.save(v, os.path.join(ckp_path, str(k)))
+                replay_dict = self.replay_buffer.to_dict()
+                replay_dict['iteration'] = epoch
+                with open(os.path.join(ckp_path, 'replay_buffer.p'), 'wb') as f:
+                    pickle.dump(replay_dict, f)
+                start_time = time.time()
 
             self._end_epoch(epoch)
