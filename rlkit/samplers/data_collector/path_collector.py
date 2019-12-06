@@ -1,5 +1,6 @@
 from collections import deque, OrderedDict
 
+import numpy as np
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.samplers.rollout_functions import rollout, multitask_rollout
 from rlkit.samplers.data_collector.base import PathCollector
@@ -12,7 +13,7 @@ class MdpPathCollector(PathCollector):
             policy,
             max_num_epoch_paths_saved=None,
             render=False,
-            render_kwargs=None,
+            render_kwargs=None
     ):
         if render_kwargs is None:
             render_kwargs = {}
@@ -23,6 +24,7 @@ class MdpPathCollector(PathCollector):
         self._render = render
         self._render_kwargs = render_kwargs
 
+        self._actions = []
         self._num_steps_total = 0
         self._num_paths_total = 0
 
@@ -32,6 +34,7 @@ class MdpPathCollector(PathCollector):
             num_steps,
             discard_incomplete_paths,
     ):
+        actions = []
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:
@@ -51,8 +54,10 @@ class MdpPathCollector(PathCollector):
                     and discard_incomplete_paths
             ):
                 break
+            actions.extend(path['actions'])
             num_steps_collected += path_len
             paths.append(path)
+        self._actions = actions
         self._num_paths_total += len(paths)
         self._num_steps_total += num_steps_collected
         self._epoch_paths.extend(paths)
@@ -63,6 +68,9 @@ class MdpPathCollector(PathCollector):
 
     def end_epoch(self, epoch):
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
+
+    def get_actions(self):
+        return np.array(self._actions)
 
     def get_diagnostics(self):
         path_lens = [len(path['actions']) for path in self._epoch_paths]

@@ -20,6 +20,8 @@ from torch.utils.tensorboard import SummaryWriter
 
 from rlkit.core.tabulate import tabulate
 
+import time
+
 
 class TerminalTablePrinter(object):
     def __init__(self):
@@ -250,6 +252,7 @@ class Logger(object):
             self.record_tabular(prefix + "Median" + suffix, np.median(values))
             self.record_tabular(prefix + "Min" + suffix, np.min(values))
             self.record_tabular(prefix + "Max" + suffix, np.max(values))
+
         else:
             self.record_tabular(prefix + "Average" + suffix, np.nan)
             self.record_tabular(prefix + "Std" + suffix, np.nan)
@@ -286,6 +289,10 @@ class Logger(object):
                 writer.writerow(tabular_dict)
                 tabular_fd.flush()
             del self._tabular[:]
+
+    def dump_actions(self, name, actions, epoch):
+        if self._tensorboard_writer is not None:
+            self._tensorboard_writer.add_histogram(name, actions, epoch)
 
     def pop_prefix(self, ):
         del self._prefixes[-1]

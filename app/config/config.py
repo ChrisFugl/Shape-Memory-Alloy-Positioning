@@ -21,6 +21,8 @@ class Config:
 
     def __init__(self, *,
         batch_size=128,
+        collect_actions,
+        collect_actions_every,
         environment,
         exploration_steps=256,
         evaluation_steps=256,
@@ -39,6 +41,8 @@ class Config:
         policy_type = policy.pop('type')
         policy_class = _policy_classes[policy_type]
         self.batch_size = batch_size
+        self.collect_actions = collect_actions
+        self.collect_actions_every = collect_actions_every
         self.environment = environment_class(**environment)
         self.exploration_steps = exploration_steps
         self.evaluation_steps = evaluation_steps
@@ -57,6 +61,8 @@ class Config:
 
     def __str__(self):
         return (f'Config(\n'
+             + f'  collect_actions = {self.collect_actions}\n'
+             + f'  collect_actions_every = {self.collect_actions_every}\n'
              + f'  environment = {self.environment}\n'
              + f'  exploration_steps = {self.exploration_steps}\n'
              + f'  evaluation_steps = {self.evaluation_steps}\n'

@@ -1,10 +1,6 @@
 batch_size: int(min=1, required=False)
-environment: any(
-  include('environment_debug'),
-  include('environment_real_time'),
-  include('environment_simulated'),
-  include('environment_test'),
-  )
+collect_actions: bool(required=False)
+collect_actions_every: int(min=1, required=False)
 exploration_steps: int(required=False)
 evaluation_steps: int(required=False)
 gradient_steps: int(required=False)
@@ -12,7 +8,14 @@ iterations: int(required=False)
 max_buffer_size: int(min=1, required=False)
 max_trajectory_length: int(min=1, required=False)
 min_num_steps_before_training: int(min=0, required=False)
+save_model: str(required=False)
 model: include('model')
+environment: any(
+  include('environment_debug'),
+  include('environment_real_time'),
+  include('environment_simulated'),
+  include('environment_test'),
+  )
 policy: any(
   include('policy_categorical'),
   include('policy_gaussian'),
@@ -20,7 +23,6 @@ policy: any(
   include('policy_tanh_gaussian'),
   include('policy_test'),
   )
-save_model: str(required=False)
 ---
 environment_debug:
   type: enum('debug')
