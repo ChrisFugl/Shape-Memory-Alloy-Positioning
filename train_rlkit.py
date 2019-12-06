@@ -18,7 +18,6 @@ import torch
 import pickle
 
 CONFIG_SCHEMA_PATH = 'app/config/schema.yaml'
-CHECKPOINTS_DIR = 'checkpoints/'
 
 def main():
     arguments = sys.argv[1:]
@@ -59,7 +58,7 @@ def main():
     setup_logger(options.name, variant=variant, tensorboard_log_dir=f'runs/{options.name}')
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
 
-    ckp_path = os.path.join(CHECKPOINTS_DIR, options.name)
+    ckp_path = os.path.join(config.checkpoint_dir, options.name)
     os.makedirs(ckp_path, exist_ok=True)
 
     experiment(variant, exploration_environment, evaluation_environment, policy, ckp_path, load_iter)

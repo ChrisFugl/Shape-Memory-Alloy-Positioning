@@ -1,12 +1,12 @@
 batch_size: 256
 collect_actions: true
 collect_actions_every: 200
-exploration_steps: 128
-evaluation_steps: 32
-gradient_steps: 128
+exploration_steps: 256
+evaluation_steps: 64
+gradient_steps: 256
 iterations: -1
 max_buffer_size: 1000000
-max_trajectory_length: 15
+max_trajectory_length: 96
 min_num_steps_before_training: 0
 save_checkpoint_interval_s: 1800
 save_model: saved_models/real_time/
@@ -16,17 +16,19 @@ environment:
   port_read: 6340
   port_write: 6340
   bytes_per_value: 9
-  next_state_wait_time: 0.2
-  action_decimal_precision: 4
+  next_state_wait_time: null
   values_per_observation: 10
-  action_digit_precision: 3
-  goal_position: 0.05
-  goal_tolerance: 0.01
+  action_decimal_precision: 4
+  action_digit_precision: 2
+  scale_action: true
+  pass_scale_interval_to_policy: true
+  reset_tolerance: 0.01
   goal_time_tolerance_s: 2
-  scale_action: True
-  pass_scale_interval_to_policy: True
-  max_position: 0.5
-  max_exponential_threshold: 0.4
+  goal_tolerance: 0.005
+  goal_position: 0.07
+  max_position: 0.12
+  max_linear_threshold_position: 0.10
+  max_linear_threshold_voltage: 7.0
   max_voltage: 12.0
 model:
   discount_factor: 0.99
@@ -35,7 +37,7 @@ model:
   learning_rate_q: 0.0003
   network:
     hidden_size: 32
-    number_of_hidden_layers: 2
+    number_of_hidden_layers: 3
   reward_scale: 3.0
   target_update_period: 1
   use_automatic_entropy_tuning: true
@@ -43,4 +45,4 @@ policy:
   type: tanh_gaussian
   network:
     hidden_size: 32
-    number_of_hidden_layers: 2
+    number_of_hidden_layers: 3

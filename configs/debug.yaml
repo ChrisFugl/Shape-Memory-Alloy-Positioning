@@ -1,4 +1,5 @@
 batch_size: 256
+checkpoint_dir: tmp
 collect_actions: true
 collect_actions_every: 100
 exploration_steps: 128

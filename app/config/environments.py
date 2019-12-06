@@ -55,8 +55,10 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         scale_action=True,
         pass_scale_interval_to_policy=True,
         max_position,
-        max_exponential_threshold,
+        max_linear_threshold_position,
+        max_linear_threshold_voltage,
         max_voltage,
+        reset_tolerance,
     ):
         """
         :type action_decimal_precision: float
@@ -73,8 +75,10 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type scale_action: bool
         :type pass_scale_interval_to_policy: bool
         :type max_position: float
-        :type max_exponential_threshold: float
+        :type max_linear_threshold_position: float
+        :type max_linear_threshold_voltage: float
         :type max_voltage: float
+        :type reset_tolerance: float
         """
         action_size = 1
         observation_size = 3
@@ -95,8 +99,10 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         self.scale_action = scale_action
         self.pass_scale_interval_to_policy = pass_scale_interval_to_policy
         self.max_position = max_position
-        self.max_exponential_threshold = max_exponential_threshold
+        self.max_linear_threshold_position = max_linear_threshold_position
+        self.max_linear_threshold_voltage = max_linear_threshold_voltage
         self.max_voltage = max_voltage
+        self.reset_tolerance = reset_tolerance
 
 class SimulatedEnvironmentConfig(EnvironmentConfig):
 

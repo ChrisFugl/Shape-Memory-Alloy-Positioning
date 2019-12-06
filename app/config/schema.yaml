@@ -1,4 +1,5 @@
 batch_size: int(min=1, required=False)
+checkpoint_dir: str(required=False)
 collect_actions: bool(required=False)
 collect_actions_every: int(min=1, required=False)
 exploration_steps: int(required=False)
@@ -50,8 +51,10 @@ environment_real_time:
   pass_scale_interval_to_policy: bool(required=False)
   scale_action: bool(required=False)
   max_position: num(min=0, required=True)
-  max_exponential_threshold: num(min=0, required=True)
+  max_linear_threshold_position: num(min=0, required=True)
+  max_linear_threshold_voltage: num(min=0, required=True)
   max_voltage: num(min=0, required=True)
+  reset_tolerance: num(min=0, required=True)
 ---
 environment_simulated:
   type: enum('simulated')
