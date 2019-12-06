@@ -45,6 +45,11 @@ environment_real_time:
   port_read: int(min=1, required=True)
   port_write: int(min=1, required=True)
   values_per_observation: int(int=1, required=True)
+  goal_tolerance: num(min=0, required=False)
+  goal_time_tolerance_s: num(min=0, required=False)
+  pass_scale_interval_to_policy: bool(required=False)
+  scale_action: bool(required=False)
+
 ---
 environment_simulated:
   type: enum('simulated')

@@ -49,7 +49,11 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         next_state_wait_time=None,
         port_read,
         port_write,
-        values_per_observation
+        values_per_observation,
+        goal_tolerance=0.01,
+        goal_time_tolerance_s=2,
+        scale_action=True,
+        pass_scale_interval_to_policy=True
     ):
         """
         :type action_decimal_precision: float
@@ -61,9 +65,12 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type port_read: int
         :type port_write: int
         :type values_per_observation: int
+        :type goal_tolerance: float
         """
         action_size = 1
-        observation_size = 3
+        observation_size = 4
+        if pass_scale_interval_to_policy:
+            observation_size += 2
         super(RealTimeEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
         self.action_decimal_precision = action_decimal_precision
         self.action_digit_precision = action_digit_precision
@@ -74,6 +81,10 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         self.port_read = port_read
         self.port_write = port_write
         self.values_per_observation = values_per_observation
+        self.goal_tolerance = goal_tolerance
+        self.goal_time_tolerance_s = goal_time_tolerance_s
+        self.scale_action = scale_action
+        self.pass_scale_interval_to_policy = pass_scale_interval_to_policy
 
 class SimulatedEnvironmentConfig(EnvironmentConfig):
 

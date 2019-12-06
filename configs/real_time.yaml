@@ -10,6 +10,10 @@ environment:
   port_read: 6340
   port_write: 6340
   values_per_observation: 1
+  goal_tolerance: 0.01
+  goal_time_tolerance_s: 2
+  scale_action: True
+  pass_scale_interval_to_policy: True
 environment_steps: 5
 gradient_steps: 1
 iterations: 1000
