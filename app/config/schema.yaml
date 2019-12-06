@@ -4,6 +4,8 @@ environment: any(
   include('environment_real_time'),
   include('environment_simulated'),
   include('environment_test'))
+collect_actions: bool(required=False)
+collect_actions_every: int(min=1, required=False)
 environment_steps: int(required=False)
 gradient_steps: int(required=False)
 iterations: int(required=False)

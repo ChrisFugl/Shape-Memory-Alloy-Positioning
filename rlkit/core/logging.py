@@ -272,11 +272,9 @@ class Logger(object):
             # write to tensorboard
             epoch = tabular_dict['Epoch']
             for name, value in tabular_dict.items():
-                if name != 'Epoch': 
+                if name != 'Epoch':
                     self._tensorboard_writer.add_scalar(name, float(value), epoch)
-                if name.split()[0] == 'exploration/Actions':
-                    self._tensorboard_writer.add_histogram('histogram/' + name, float(value), epoch)
-                    
+
             # Also write to the csv files
             # This assumes that the keys in each iteration won't change!
             for tabular_fd in list(self._tabular_fds.values()):
@@ -289,6 +287,10 @@ class Logger(object):
                 writer.writerow(tabular_dict)
                 tabular_fd.flush()
             del self._tabular[:]
+
+    def dump_actions(self, name, actions, epoch):
+        if self._tensorboard_writer is not None:
+            self._tensorboard_writer.add_histogram(name, actions, epoch)
 
     def pop_prefix(self, ):
         del self._prefixes[-1]

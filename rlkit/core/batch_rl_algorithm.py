@@ -15,6 +15,8 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             exploration_data_collector: PathCollector,
             evaluation_data_collector: PathCollector,
             replay_buffer: ReplayBuffer,
+            collect_actions,
+            collect_actions_every,
             batch_size,
             max_path_length,
             num_epochs,
@@ -31,6 +33,8 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             exploration_data_collector,
             evaluation_data_collector,
             replay_buffer,
+            collect_actions,
+            collect_actions_every,
         )
         self.batch_size = batch_size
         self.max_path_length = max_path_length

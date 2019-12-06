@@ -30,6 +30,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             exploration_data_collector: DataCollector,
             evaluation_data_collector: DataCollector,
             replay_buffer: ReplayBuffer,
+            collect_actions,
+            collect_actions_every,
     ):
         self.trainer = trainer
         self.expl_env = exploration_env
@@ -37,6 +39,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         self.expl_data_collector = exploration_data_collector
         self.eval_data_collector = evaluation_data_collector
         self.replay_buffer = replay_buffer
+        self.collect_actions = collect_actions
+        self.collect_actions_every = collect_actions_every
         self._start_epoch = 0
 
         self.post_epoch_funcs = []
@@ -56,6 +60,9 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.save_itr_params(epoch, snapshot)
         gt.stamp('saving')
         self._log_stats(epoch)
+
+        if self.collect_actions and epoch % self.collect_actions_every == 0:
+            self._log_actions(epoch)
 
         self.expl_data_collector.end_epoch(epoch)
         self.eval_data_collector.end_epoch(epoch)
@@ -135,6 +142,12 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.record_dict(_get_epoch_timings())
         logger.record_tabular('Epoch', epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)
+
+    def _log_actions(self, epoch):
+        exploration_actions = self.expl_data_collector.get_actions()
+        evaluation_actions = self.eval_data_collector.get_actions()
+        logger.dump_actions('exploration/actions', exploration_actions, epoch)
+        logger.dump_actions('evaluation/actions', evaluation_actions, epoch)
 
     @abc.abstractmethod
     def training_mode(self, mode):

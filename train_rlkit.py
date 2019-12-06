@@ -30,6 +30,8 @@ def main():
         layer_size=config.model.network.hidden_size,
         replay_buffer_size=config.max_buffer_size,
         algorithm_kwargs=dict(
+            collect_actions=config.collect_actions,
+            collect_actions_every=config.collect_actions_every,
             num_epochs=config.iterations,
             num_eval_steps_per_epoch=config.environment_steps,
             num_trains_per_train_loop=config.gradient_steps,

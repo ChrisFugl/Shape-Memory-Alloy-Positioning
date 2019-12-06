@@ -5,6 +5,8 @@ environment:
   goal_tolerance: 3.0
   min_start_position: 0.0
   max_start_position: 2.0
+collect_actions: true
+collect_actions_every: 100
 environment_steps: 256
 gradient_steps: 50
 iterations: 500
