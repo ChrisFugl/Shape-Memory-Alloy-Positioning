@@ -93,8 +93,7 @@ class Logger(object):
         self._header_printed = False
         self.table_printer = TerminalTablePrinter()
 
-        # TODO: set name dynamically
-        self._tensorboard_writer = SummaryWriter(log_dir='runs/test')
+        self._tensorboard_writer = None
 
     def reset(self):
         self.__init__()
@@ -158,6 +157,9 @@ class Logger(object):
 
     def get_log_tabular_only(self, ):
         return self._log_tabular_only
+
+    def set_tensorboard_log_dir(self, tensorboard_log_dir):
+        self._tensorboard_writer = SummaryWriter(log_dir=tensorboard_log_dir)
 
     def log(self, s, with_prefix=True, with_timestamp=True):
         out = s
@@ -267,10 +269,11 @@ class Logger(object):
                     pass
             tabular_dict = dict(self._tabular)
             # write to tensorboard
-            epoch = tabular_dict['Epoch']
-            for name, value in tabular_dict.items():
-                if name != 'Epoch':
-                    self._tensorboard_writer.add_scalar(name, float(value), epoch)
+            if self._tensorboard_writer is not None:
+                epoch = tabular_dict['Epoch']
+                for name, value in tabular_dict.items():
+                    if name != 'Epoch':
+                        self._tensorboard_writer.add_scalar(name, float(value), epoch)
             # Also write to the csv files
             # This assumes that the keys in each iteration won't change!
             for tabular_fd in list(self._tabular_fds.values()):

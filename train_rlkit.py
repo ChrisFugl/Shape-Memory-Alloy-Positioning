@@ -49,7 +49,7 @@ def main():
             use_automatic_entropy_tuning=config.model.use_automatic_entropy_tuning,
         ),
     )
-    setup_logger(options.name, variant=variant)
+    setup_logger(options.name, variant=variant, tensorboard_log_dir=f'runs/{options.name}')
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     experiment(variant, exploration_environment, evaluation_environment, policy)
 
@@ -80,8 +80,8 @@ def experiment(variant, expl_env, eval_env, policy):
 
     expl_env = NormalizedBoxEnv(expl_env)
     eval_env = NormalizedBoxEnv(eval_env)
-    obs_dim = expl_env.observation_size
-    action_dim = eval_env.action_size
+    obs_dim = expl_env.observation_space.low.size
+    action_dim = eval_env.action_space.low.size
 
     layer_size = variant['layer_size']
     number_of_layers = variant['number_of_layers']

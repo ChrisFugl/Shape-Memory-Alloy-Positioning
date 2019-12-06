@@ -92,7 +92,7 @@ class DebugEnvironment(Environment):
     def get_scaled_action(self, position, action):
         min, max = self.get_action_interval(position)
         # transform to interval (0, 1)
-        action_normalized = (action + 1.0) / 2.0
+        action_normalized = (action - ACTION_LOW) / (ACTION_HIGH - ACTION_LOW)
         # transform to interval (min, max)
         action_scaled = min + (max - min) * action_normalized
         return action_scaled

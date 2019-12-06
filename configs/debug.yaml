@@ -2,16 +2,16 @@ batch_size: 256
 environment:
   type: debug
   goal_position: 5.0
-  goal_tolerance: 3.0
-  min_start_position: 1.0
-  max_start_position: 2.0
+  goal_tolerance: 0.33
+  min_start_position: 0.0
+  max_start_position: 10.0
   pass_scale_interval_to_policy: true
-  scale_action: false
+  scale_action: true
 exploration_steps: 256
-evaluation_steps: 64
-gradient_steps: 50
-iterations: 1000
-max_buffer_size: 100000
+evaluation_steps: 32
+gradient_steps: 100
+iterations: 500
+max_buffer_size: 1000000
 max_trajectory_length: 10
 min_num_steps_before_training: 0
 model:

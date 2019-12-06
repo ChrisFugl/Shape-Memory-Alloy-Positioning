@@ -221,6 +221,7 @@ def setup_logger(
         log_dir=None,
         git_infos=None,
         script_name=None,
+        tensorboard_log_dir=None,
         **create_log_dir_kwargs
 ):
     """
@@ -245,6 +246,7 @@ def setup_logger(
     :param log_dir:
     :param git_infos:
     :param script_name: If set, save the script name to this.
+    :param tensorboard_log_dir:
     :return:
     """
     if git_infos is None:
@@ -276,6 +278,8 @@ def setup_logger(
     logger.set_log_tabular_only(log_tabular_only)
     exp_name = log_dir.split("/")[-1]
     logger.push_prefix("[%s] " % exp_name)
+    if tensorboard_log_dir is not None:
+        logger.set_tensorboard_log_dir(tensorboard_log_dir)
 
     if git_infos is not None:
         for (
