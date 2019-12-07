@@ -104,11 +104,11 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 ckp_path = os.path.join(self.save_dir, 'iteration_' + str(epoch))
                 if not os.path.exists(ckp_path):
                     os.mkdir(ckp_path)
-                for k, v in self.trainer.get_snapshot().items():
-                    torch.save(v, os.path.join(ckp_path, str(k)))
+                model_checkpoint = self.trainer.get_checkpoint()
+                torch.save(model_checkpoint, os.path.join(ckp_path, 'model.pt'))
                 replay_dict = self.replay_buffer.to_dict()
                 replay_dict['iteration'] = epoch
-                with open(os.path.join(ckp_path, 'replay_buffer.p'), 'wb') as f:
+                with open(os.path.join(ckp_path, 'replay_buffer.pkl'), 'wb') as f:
                     pickle.dump(replay_dict, f)
                 start_time = time.time()
 

@@ -34,6 +34,7 @@ class SACTrainer(TorchTrainer):
 
             use_automatic_entropy_tuning=True,
             target_entropy=None,
+            checkpoint=None,
     ):
         super().__init__()
         self.env = env
@@ -81,6 +82,19 @@ class SACTrainer(TorchTrainer):
         self.eval_statistics = OrderedDict()
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
+
+        if checkpoint is not None:
+            self.policy.load_state_dict(checkpoint['policy'])
+            self.qf1.load_state_dict(checkpoint['qf1'])
+            self.qf2.load_state_dict(checkpoint['qf2'])
+            self.target_qf1.load_state_dict(checkpoint['target_qf1'])
+            self.target_qf2.load_state_dict(checkpoint['target_qf2'])
+            self.policy_optimizer.load_state_dict(checkpoint['policy_optimizer'])
+            self.qf1_optimizer.load_state_dict(checkpoint['qf1_optimizer'])
+            self.qf2_optimizer.load_state_dict(checkpoint['qf2_optimizer'])
+            if self.use_automatic_entropy_tuning:
+                self.log_alpha = checkpoint['log_alpha']
+                self.alpha_optimizer.load_state_dict(checkpoint['alpha_optimizer'])
 
     def train_from_torch(self, batch):
         rewards = batch['rewards']
@@ -234,8 +248,18 @@ class SACTrainer(TorchTrainer):
             alpha_opt = self.alpha_optimizer,
         )
 
-
-
-
-
-
+    def get_checkpoint(self):
+        checkpoint = dict(
+            policy=self.policy.state_dict(),
+            qf1=self.qf1.state_dict(),
+            qf2=self.qf2.state_dict(),
+            target_qf1=self.target_qf1.state_dict(),
+            target_qf2=self.target_qf2.state_dict(),
+            policy_optimizer=self.policy_optimizer.state_dict(),
+            qf1_optimizer=self.qf1_optimizer.state_dict(),
+            qf2_optimizer=self.qf2_optimizer.state_dict(),
+        )
+        if self.use_automatic_entropy_tuning:
+            checkpoint['log_alpha'] = self.log_alpha
+            checkpoint['alpha_optimizer'] = self.alpha_optimizer.state_dict()
+        return checkpoint
