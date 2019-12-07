@@ -120,7 +120,8 @@ class RealTimeEnvironment(Environment):
         return np.array(observations, dtype=np.float)
 
     def is_terminal_state(self, state, state_time):
-        return state_time is not None and state_time >= self.goal_time_tolerance_s
+        terminal = self.enter_goal_time is not None and abs(self.enter_goal_time - state_time) >= self.goal_time_tolerance_s
+        return terminal
 
     def reset(self):
         self.enter_goal_time = None
@@ -156,7 +157,6 @@ class RealTimeEnvironment(Environment):
         action_string = f'{action:0{action_length}.{self.action_decimal_precision}f}'
         action_encoded = action_string.encode('ascii')
         action_bytes = bytes(action_encoded)
-        print(action_string)
         writer.send(action_bytes)
 
     def step(self, action):
