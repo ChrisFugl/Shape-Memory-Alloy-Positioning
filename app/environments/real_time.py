@@ -6,10 +6,13 @@ import socket
 import struct
 import time
 
-ACTION_LOW = 0.0
+ACTION_LOW = -1.0
+ACTION_HIGH = 1.0
 POSITION_LOW = 0
-TEMP_LOW = 0
-TEMP_HIGH = 100
+TEMP_LOW = 0.0
+TEMP_HIGH = 150.0
+
+MIN_VOLTAGE = 0.0
 
 # define reader and writer globally to ensure
 # that only exactly one instance of each will
@@ -56,6 +59,7 @@ class RealTimeEnvironment(Environment):
 
         # values used to compute interval that an action is scaled to
         self.max_position = config.max_position
+        self.max_position_limit = config.max_position + config.reset_tolerance
         self.max_voltage = config.max_voltage
         self.max_linear_threshold_position = config.max_linear_threshold_position
         self.max_linear_threshold_voltage = config.max_linear_threshold_voltage
@@ -63,14 +67,14 @@ class RealTimeEnvironment(Environment):
         self.line_intersection = config.max_voltage
         self.max_position_threshold_distance = abs(self.max_linear_threshold_position - self.max_position)
 
-        self.action_space = spaces.Box(low=ACTION_LOW, high=self.max_voltage, shape=(config.action_size,), dtype=np.float)
+        self.action_space = spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
 
         if self.scale_action and self.pass_scale_interval_to_policy:
-            observation_low = np.array([TEMP_LOW, POSITION_LOW, POSITION_LOW, ACTION_LOW, ACTION_LOW])
-            observation_high = np.array([TEMP_HIGH, self.max_position, self.max_position, self.max_voltage, self.max_voltage])
+            observation_low = np.array([TEMP_LOW, POSITION_LOW, POSITION_LOW, MIN_VOLTAGE, MIN_VOLTAGE])
+            observation_high = np.array([TEMP_HIGH, self.max_position_limit, self.max_position_limit, self.max_voltage, self.max_voltage])
         else:
             observation_low = np.array([TEMP_LOW, POSITION_LOW, POSITION_LOW])
-            observation_high = np.array([TEMP_HIGH, self.max_position, self.max_position])
+            observation_high = np.array([TEMP_HIGH, self.max_position_limit, self.max_position_limit])
 
         self.observation_space = spaces.Box(low=observation_low, high=observation_high, dtype=np.float)
 
@@ -188,7 +192,7 @@ class RealTimeEnvironment(Environment):
     def get_scaled_action(self, position, action):
         min, max = self.get_action_interval(position)
         # transform to interval (0, 1)
-        action_normalized = (action - ACTION_LOW) / (self.max_voltage - ACTION_LOW)
+        action_normalized = (action - ACTION_LOW) / (ACTION_HIGH - ACTION_LOW)
         # transform to interval (min, max)
         action_scaled = min + (max - min) * action_normalized
         return action_scaled
@@ -211,4 +215,4 @@ class RealTimeEnvironment(Environment):
             distance_to_max_position = abs(position - self.max_position)
             distance_relative_to_max_threshold_position = exp(distance_to_max_position - self.max_position_threshold_distance)
             max_voltage = max_voltage_at_threshold * distance_relative_to_max_threshold_position
-        return ACTION_LOW, max_voltage
+        return MIN_VOLTAGE, max_voltage
