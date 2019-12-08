@@ -4,7 +4,7 @@ collect_actions: true
 collect_actions_every: 60
 exploration_steps: 256
 evaluation_steps: 128
-gradient_steps: 256
+gradient_steps: 128
 max_trajectory_length: 128
 iterations: -1
 max_buffer_size: 1000000
@@ -26,9 +26,9 @@ environment:
   reset_tolerance: 0.01
   goal_time_tolerance_s: 2
   goal_tolerance: 0.005
-  goal_position: 0.07
-  max_position: 0.12
-  max_linear_threshold_position: 0.10
+  goal_position: 0.05
+  max_position: 0.09
+  max_linear_threshold_position: 0.07
   max_linear_threshold_voltage: 7.0
   max_voltage: 12.0
 model:
