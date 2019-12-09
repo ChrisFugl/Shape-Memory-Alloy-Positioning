@@ -55,6 +55,9 @@ environment_real_time:
   max_linear_threshold_voltage: num(min=0, required=True)
   max_voltage: num(min=0, required=True)
   reset_tolerance: num(min=0, required=True)
+  reward_std: num(min=0, required=True)
+  reward_trunc_min: num(min=0, required=True)
+  reward_trunc_max: num(min=0, required=True)
 ---
 environment_simulated:
   type: enum('simulated')

@@ -59,6 +59,9 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         max_linear_threshold_voltage,
         max_voltage,
         reset_tolerance,
+        reward_std,
+        reward_trunc_min,
+        reward_trunc_max,
     ):
         """
         :type action_decimal_precision: float
@@ -79,6 +82,9 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type max_linear_threshold_voltage: float
         :type max_voltage: float
         :type reset_tolerance: float
+        :type reward_std: float
+        :type reward_trunc_min: float
+        :type reward_trunc_max: float
         """
         action_size = 1
         observation_size = 3
@@ -103,6 +109,9 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         self.max_linear_threshold_voltage = max_linear_threshold_voltage
         self.max_voltage = max_voltage
         self.reset_tolerance = reset_tolerance
+        self.reward_std = reward_std
+        self.reward_trunc_min = reward_trunc_min
+        self.reward_trunc_max = reward_trunc_max
 
 class SimulatedEnvironmentConfig(EnvironmentConfig):
 

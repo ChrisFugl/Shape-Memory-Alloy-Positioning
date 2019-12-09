@@ -2,6 +2,7 @@ from app.environments.environment import Environment
 from gym import spaces
 from math import exp
 import numpy as np
+from scipy import stats
 import socket
 import struct
 import time
@@ -11,6 +12,8 @@ ACTION_HIGH = 1.0
 POSITION_LOW = 0
 TEMP_LOW = 0.0
 TEMP_HIGH = 150.0
+TIME_LOW = 0.0
+TIME_HIGH = 30.0
 
 MIN_VOLTAGE = 0.0
 
@@ -26,10 +29,16 @@ class RealTimeEnvironment(Environment):
 
     state:
         * temperature
+        * temperature change
         * position
+        * position change
+        * time since last state (seconds)
         * goal position
         * min voltage
         * max voltage
+
+    min and max voltage are optional and are only added when it is configured
+    by setting scale_action and pass_scale_interval_to_policy as true
 
     action:
         * voltage
@@ -41,43 +50,30 @@ class RealTimeEnvironment(Environment):
         """
         :type config: app.config.environments.RealTimeEnvironmentConfig
         """
+        super(RealTimeEnvironment, self).__init__(config)
+        self._action_decimal_precision = config.action_decimal_precision
+        self._action_digit_precision = config.action_digit_precision
+        self._bytes_per_value = config.bytes_per_value
+        self._goal_position = config.goal_position
+        self._next_state_wait_time = config.next_state_wait_time
+        self._values_per_observation = config.values_per_observation
+        self._goal_tolerance = config.goal_tolerance
+        self._goal_time_tolerance_s = config.goal_time_tolerance_s
+        self._reset_tolerance = config.reset_tolerance
+
+        self._enter_goal_time = None
+        self._state = None
+        self._state_timestep = None
+
+        self._setup_reward_function(config)
+        self._setup_action_scaling(config)
+        self._setup_connections(config)
+        self.action_space = self._get_action_space()
+        self.observation_space = self._get_observation_space()
+
+    def _setup_connections(self, config):
         global reader
         global writer
-        super(RealTimeEnvironment, self).__init__(config)
-        self.action_decimal_precision = config.action_decimal_precision
-        self.action_digit_precision = config.action_digit_precision
-        self.bytes_per_value = config.bytes_per_value
-        self.goal_position = config.goal_position
-        self.next_state_wait_time = config.next_state_wait_time
-        self.values_per_observation = config.values_per_observation
-        self.goal_tolerance = config.goal_tolerance
-        self.goal_time_tolerance_s = config.goal_time_tolerance_s
-        self.scale_action = config.scale_action
-        self.pass_scale_interval_to_policy = config.pass_scale_interval_to_policy
-        self.reset_tolerance = config.reset_tolerance
-        self.enter_goal_time = None
-
-        # values used to compute interval that an action is scaled to
-        self.max_position = config.max_position
-        self.max_position_limit = config.max_position + config.reset_tolerance
-        self.max_voltage = config.max_voltage
-        self.max_linear_threshold_position = config.max_linear_threshold_position
-        self.max_linear_threshold_voltage = config.max_linear_threshold_voltage
-        self.line_slope = (self.max_linear_threshold_voltage - self.max_voltage) / (self.max_linear_threshold_position - POSITION_LOW)
-        self.line_intersection = config.max_voltage
-        self.max_position_threshold_distance = abs(self.max_linear_threshold_position - self.max_position)
-
-        self.action_space = spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
-
-        if self.scale_action and self.pass_scale_interval_to_policy:
-            observation_low = np.array([TEMP_LOW, POSITION_LOW, POSITION_LOW, MIN_VOLTAGE, MIN_VOLTAGE])
-            observation_high = np.array([TEMP_HIGH, self.max_position_limit, self.max_position_limit, self.max_voltage, self.max_voltage])
-        else:
-            observation_low = np.array([TEMP_LOW, POSITION_LOW, POSITION_LOW])
-            observation_high = np.array([TEMP_HIGH, self.max_position_limit, self.max_position_limit])
-
-        self.observation_space = spaces.Box(low=observation_low, high=observation_high, dtype=np.float)
-
         if reader is None or writer is None:
             if config.port_read == config.port_write:
                 client = self.create_connection(config.host, config.port_read)
@@ -87,8 +83,39 @@ class RealTimeEnvironment(Environment):
                 reader = self.create_connection(config.host, config.port_read)
                 writer = self.create_connection(config.host, config.port_write)
 
+    def _setup_reward_function(self, config):
+        self._reward_trunc_min = config.reward_trunc_min
+        self._reward_trunc_max = config.reward_trunc_max
+        self._reward_gaussian = stats.norm(loc=config.goal_position, scale=config.reward_std)
+        self._reward_gaussian_max = self._reward_gaussian.pdf(config.goal_position)
+
+    def _setup_action_scaling(self, config):
+        self._scale_action = config.scale_action
+        self._pass_scale_interval = config.scale_action and config.pass_scale_interval_to_policy
+        self._max_position = config.max_position
+        self._max_position_limit = config.max_position + config.reset_tolerance
+        self._max_voltage = config.max_voltage
+        self._max_linear_threshold_position = config.max_linear_threshold_position
+        self._max_linear_threshold_voltage = config.max_linear_threshold_voltage
+        self._line_slope = (self._max_linear_threshold_voltage - self._max_voltage) / (self._max_linear_threshold_position - POSITION_LOW)
+        self._line_intersection = config.max_voltage
+        self._max_position_threshold_distance = abs(self._max_linear_threshold_position - self._max_position)
+
+    def _get_action_space(self):
+        return spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
+
+    def _get_observation_space(self):
+        observation_low = [TEMP_LOW, -TEMP_HIGH, POSITION_LOW, -self._max_position_limit, TIME_LOW, POSITION_LOW]
+        observation_high = [TEMP_HIGH, TEMP_HIGH, self._max_position_limit, self._max_position_limit, TIME_HIGH, self._max_position_limit]
+        if self._pass_scale_interval:
+            observation_low.extend([MIN_VOLTAGE, MIN_VOLTAGE])
+            observation_high.extend([self._max_voltage, self._max_voltage])
+        observation_low = np.array(observation_low)
+        observation_high = np.array(observation_high)
+        return spaces.Box(low=observation_low, high=observation_high, dtype=np.float)
+
     def is_in_goal(self, position):
-        return abs(position - self.goal_position) < self.goal_tolerance
+        return abs(position - self._goal_position) < self._goal_tolerance
 
     def create_connection(self, host, port):
         connection = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -96,13 +123,13 @@ class RealTimeEnvironment(Environment):
         return connection
 
     def get_state(self):
-        return self.state
+        return self._state
 
     def receive_observation(self):
         global reader
         values = []
-        for _ in range(self.values_per_observation):
-            value = reader.recv(self.bytes_per_value)
+        for _ in range(self._values_per_observation):
+            value = reader.recv(self._bytes_per_value)
             decoded_value = value.decode('ascii')
             float_value = float(decoded_value)
             values.append(float_value)
@@ -111,54 +138,67 @@ class RealTimeEnvironment(Environment):
     def receive_observations(self):
         temperature = self.receive_observation()
         position = self.receive_observation()
-        goal_position = self.goal_position
-        if self.scale_action and self.pass_scale_interval_to_policy:
-            min_voltage, max_voltage = self.get_action_interval(position)
-            state = [temperature, position, goal_position, min_voltage, max_voltage]
-        else:
-            state = [temperature, position, goal_position]
-        return state
+        return temperatue, position
 
     def fetch_state(self):
-        observations = self.receive_observations()
+        temperature, position = self.receive_observations()
+        if self._state is None:
+            temperature_change = 0.0
+            position_change = 0.0
+            time_since_last_step = 0.0
+        else:
+            temperature_change = temperature - self._state[0]
+            position_change = position - self._state[2]
+            time_since_last_step = time.time() - self._state_timestep
+        goal_position = self._goal_position
+        state = [temperature, temperature_change, position, position_change, time_since_last_step]
+        if self._pass_scale_interval:
+            min_voltage, max_voltage = self.get_action_interval(position)
+            state.extend([min_voltage, max_voltage])
         return np.array(observations, dtype=np.float)
 
     def is_terminal_state(self, state, state_time):
-        terminal = self.enter_goal_time is not None and abs(self.enter_goal_time - state_time) >= self.goal_time_tolerance_s
+        terminal = self._enter_goal_time is not None and abs(self._enter_goal_time - state_time) >= self._goal_time_tolerance_s
         return terminal
 
     def reset(self):
-        self.enter_goal_time = None
+        self._enter_goal_time = None
+        self._state = None
+        self._state_timestep = None
         # wait for the spring to be close to the start position before starting a new trajectory
         while True:
             state = self.fetch_state()
-            position = state[1]
-            if position <= self.reset_tolerance:
+            position = state[2]
+            if position <= self._reset_tolerance:
                 break
-        self.state = state
-        return self.state
+        self._state = state
+        self._state_timestep = time.time()
+        return state
 
     def render(self):
         pass
 
     def reward(self, state, action, next_state):
-        position = state[1]
-        next_position = next_state[1]
-        distance_to_goal = abs(position - self.goal_position)
-        next_distance_to_goal = abs(next_position- self.goal_position)
-        distance_difference = distance_to_goal - next_distance_to_goal
-        if self.is_in_goal(next_position):
-            next_similarity_to_goal = 1
-        else:
-            next_similarity_to_min_goal = exp(-abs(next_position - (self.goal_position - self.goal_tolerance)))
-            next_similarity_to_max_goal = exp(-abs(next_position - (self.goal_position + self.goal_tolerance)))
-            next_similarity_to_goal = max(next_similarity_to_min_goal, next_similarity_to_max_goal)
-        return distance_difference + next_similarity_to_goal
+        position = state[2]
+        next_position = next_state[2]
+        next_time = next_state[4]
+        distance = abs(position - self._goal_position)
+        distance_next = abs(p_next - self._goal_position)
+        velocity = (distance - distance_next) / next_time
+        similarity = self._reward_goal_similarity(next_state)
+        return velocity + similarity
+
+    def _reward_goal_similarity(self, state):
+        position = state[2]
+        similarity = self._reward_gaussian.pdf(position)
+        similarity_truncated = (self._reward_trunc_min < position) * (position < self._reward_trunc_max) * similarity
+        similarity_normalized = similarity_truncated / self._reward_gaussian_max
+        return similarity_normalized
 
     def send_action(self, action):
         global writer
-        action_length = self.action_decimal_precision + self.action_digit_precision + 1
-        action_string = f'{action:0{action_length}.{self.action_decimal_precision}f}'
+        action_length = self._action_decimal_precision + self._action_digit_precision + 1
+        action_string = f'{action:0{action_length}.{self._action_decimal_precision}f}'
         action_encoded = action_string.encode('ascii')
         action_bytes = bytes(action_encoded)
         writer.send(action_bytes)
@@ -170,23 +210,24 @@ class RealTimeEnvironment(Environment):
         :param action: action performed in current environment
         :return: (next state, reward)
         """
-        if self.scale_action:
-            action = self.get_scaled_action(self.state[1], action)
+        if self._scale_action:
+            action = self.get_scaled_action(self._state[1], action)
         self.send_action(action[0])
         # it may be necessary to wait a while in order for the action
         # to have an observable effect
-        if self.next_state_wait_time is not None:
-            time.sleep(self.next_state_wait_time)
+        if self._next_state_wait_time is not None:
+            time.sleep(self._next_state_wait_time)
         next_state = self.fetch_state()
         next_state_time = time.time()
         next_position = next_state[1]
-        if self.enter_goal_time is None and self.is_in_goal(next_position):
-            self.enter_goal_time = next_state_time
-        elif self.enter_goal_time is not None and not self.is_in_goal(next_position):
-            self.enter_goal_time = None
-        reward = self.reward(self.state, action, next_state)
+        if self._enter_goal_time is None and self.is_in_goal(next_position):
+            self._enter_goal_time = next_state_time
+        elif self._enter_goal_time is not None and not self.is_in_goal(next_position):
+            self._enter_goal_time = None
+        reward = self.reward(self._state, action, next_state)
         terminal = self.is_terminal_state(next_state, next_state_time)
-        self.state = next_state
+        self._state = next_state
+        self._state_timestep = next_state_time
         return next_state, reward, terminal, {}
 
     def get_scaled_action(self, position, action):
@@ -206,13 +247,13 @@ class RealTimeEnvironment(Environment):
         It interpolates exponentially from the threshold and until the maximum position.
         Maximum voltage is 0 in the (theoretical) case that position is greater than maximum position.
         """
-        max_voltage_at_threshold = self.line_slope * position + self.line_intersection
-        if position <= self.max_linear_threshold_position:
+        max_voltage_at_threshold = self._line_slope * position + self._line_intersection
+        if position <= self._max_linear_threshold_position:
             max_voltage = max_voltage_at_threshold
-        elif position >= self.max_position:
+        elif position >= self._max_position:
             max_voltage = 0.0
         else:
-            distance_to_max_position = abs(position - self.max_position)
-            distance_relative_to_max_threshold_position = exp(distance_to_max_position - self.max_position_threshold_distance)
+            distance_to_max_position = abs(position - self._max_position)
+            distance_relative_to_max_threshold_position = exp(distance_to_max_position - self._max_position_threshold_distance)
             max_voltage = max_voltage_at_threshold * distance_relative_to_max_threshold_position
         return MIN_VOLTAGE, max_voltage
