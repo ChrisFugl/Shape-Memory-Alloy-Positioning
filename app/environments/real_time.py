@@ -11,7 +11,6 @@ ACTION_LOW = -1.0
 ACTION_HIGH = 1.0
 POSITION_LOW = 0
 TEMP_LOW = 0.0
-TEMP_HIGH = 150.0
 TIME_LOW = 0.0
 TIME_HIGH = 30.0
 
@@ -68,8 +67,8 @@ class RealTimeEnvironment(Environment):
         self._setup_reward_function(config)
         self._setup_action_scaling(config)
         self._setup_connections(config)
-        self.action_space = self._get_action_space()
-        self.observation_space = self._get_observation_space()
+        self.action_space = self._get_action_space(config)
+        self.observation_space = self._get_observation_space(config)
 
     def _setup_connections(self, config):
         global reader
@@ -97,16 +96,18 @@ class RealTimeEnvironment(Environment):
         self._max_voltage = config.max_voltage
         self._max_linear_threshold_position = config.max_linear_threshold_position
         self._max_linear_threshold_voltage = config.max_linear_threshold_voltage
+        self._max_temperature = config.max_temperature
         self._line_slope = (self._max_linear_threshold_voltage - self._max_voltage) / (self._max_linear_threshold_position - POSITION_LOW)
         self._line_intersection = config.max_voltage
         self._max_position_threshold_distance = abs(self._max_linear_threshold_position - self._max_position)
 
-    def _get_action_space(self):
+    def _get_action_space(self, config):
         return spaces.Box(low=ACTION_LOW, high=ACTION_HIGH, shape=(config.action_size,), dtype=np.float)
 
-    def _get_observation_space(self):
-        observation_low = [TEMP_LOW, -TEMP_HIGH, POSITION_LOW, -self._max_position_limit, TIME_LOW, POSITION_LOW]
-        observation_high = [TEMP_HIGH, TEMP_HIGH, self._max_position_limit, self._max_position_limit, TIME_HIGH, self._max_position_limit]
+    def _get_observation_space(self, config):
+        temp_high = config.max_temperature + 10.0
+        observation_low = [TEMP_LOW, -temp_high, POSITION_LOW, -self._max_position_limit, TIME_LOW, POSITION_LOW]
+        observation_high = [temp_high, temp_high, self._max_position_limit, self._max_position_limit, TIME_HIGH, self._max_position_limit]
         if self._pass_scale_interval:
             observation_low.extend([MIN_VOLTAGE, MIN_VOLTAGE])
             observation_high.extend([self._max_voltage, self._max_voltage])
@@ -138,7 +139,7 @@ class RealTimeEnvironment(Environment):
     def receive_observations(self):
         temperature = self.receive_observation()
         position = self.receive_observation()
-        return temperatue, position
+        return temperature, position
 
     def fetch_state(self):
         temperature, position = self.receive_observations()
@@ -150,12 +151,11 @@ class RealTimeEnvironment(Environment):
             temperature_change = temperature - self._state[0]
             position_change = position - self._state[2]
             time_since_last_step = time.time() - self._state_timestep
-        goal_position = self._goal_position
-        state = [temperature, temperature_change, position, position_change, time_since_last_step]
+        state = [temperature, temperature_change, position, position_change, time_since_last_step, self._goal_position]
         if self._pass_scale_interval:
-            min_voltage, max_voltage = self.get_action_interval(position)
+            min_voltage, max_voltage = self.get_action_interval(temperature, position)
             state.extend([min_voltage, max_voltage])
-        return np.array(observations, dtype=np.float)
+        return np.array(state, dtype=np.float)
 
     def is_terminal_state(self, state, state_time):
         terminal = self._enter_goal_time is not None and abs(self._enter_goal_time - state_time) >= self._goal_time_tolerance_s
@@ -183,7 +183,7 @@ class RealTimeEnvironment(Environment):
         next_position = next_state[2]
         next_time = next_state[4]
         distance = abs(position - self._goal_position)
-        distance_next = abs(p_next - self._goal_position)
+        distance_next = abs(next_position - self._goal_position)
         velocity = (distance - distance_next) / next_time
         similarity = self._reward_goal_similarity(next_state)
         return velocity, similarity, velocity + similarity
@@ -211,7 +211,7 @@ class RealTimeEnvironment(Environment):
         :return: (next state, reward)
         """
         if self._scale_action:
-            action = self.get_scaled_action(self._state[1], action)
+            action = self.get_scaled_action(self._state, action)
         self.send_action(action[0])
         # it may be necessary to wait a while in order for the action
         # to have an observable effect
@@ -231,15 +231,17 @@ class RealTimeEnvironment(Environment):
         self._state_timestep = next_state_time
         return next_state, reward, terminal, info
 
-    def get_scaled_action(self, position, action):
-        min, max = self.get_action_interval(position)
+    def get_scaled_action(self, state, action):
+        temperature = state[1]
+        position = state[2]
+        min, max = self.get_action_interval(temperature, position)
         # transform to interval (0, 1)
         action_normalized = (action - ACTION_LOW) / (ACTION_HIGH - ACTION_LOW)
         # transform to interval (min, max)
         action_scaled = min + (max - min) * action_normalized
         return action_scaled
 
-    def get_action_interval(self, position):
+    def get_action_interval(self, temperature, position):
         """
         Compute min and max voltage.
 
@@ -248,13 +250,16 @@ class RealTimeEnvironment(Environment):
         It interpolates exponentially from the threshold and until the maximum position.
         Maximum voltage is 0 in the (theoretical) case that position is greater than maximum position.
         """
-        max_voltage_at_threshold = self._line_slope * position + self._line_intersection
-        if position <= self._max_linear_threshold_position:
-            max_voltage = max_voltage_at_threshold
-        elif position >= self._max_position:
+        if self._max_temperature <= temperature:
             max_voltage = 0.0
         else:
-            distance_to_max_position = abs(position - self._max_position)
-            distance_relative_to_max_threshold_position = exp(distance_to_max_position - self._max_position_threshold_distance)
-            max_voltage = max_voltage_at_threshold * distance_relative_to_max_threshold_position
+            max_voltage_at_threshold = self._line_slope * position + self._line_intersection
+            if position <= self._max_linear_threshold_position:
+                max_voltage = max_voltage_at_threshold
+            elif position >= self._max_position:
+                max_voltage = 0.0
+            else:
+                distance_to_max_position = abs(position - self._max_position)
+                distance_relative_to_max_threshold_position = exp(distance_to_max_position - self._max_position_threshold_distance)
+                max_voltage = max_voltage_at_threshold * distance_relative_to_max_threshold_position
         return MIN_VOLTAGE, max_voltage

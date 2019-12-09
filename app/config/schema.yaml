@@ -53,6 +53,7 @@ environment_real_time:
   max_position: num(min=0, required=True)
   max_linear_threshold_position: num(min=0, required=True)
   max_linear_threshold_voltage: num(min=0, required=True)
+  max_temperature: num(min=0, required=True)
   max_voltage: num(min=0, required=True)
   reset_tolerance: num(min=0, required=True)
   reward_std: num(min=0, required=True)

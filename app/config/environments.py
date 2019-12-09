@@ -57,6 +57,7 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         max_position,
         max_linear_threshold_position,
         max_linear_threshold_voltage,
+        max_temperature,
         max_voltage,
         reset_tolerance,
         reward_std,
@@ -80,6 +81,7 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type max_position: float
         :type max_linear_threshold_position: float
         :type max_linear_threshold_voltage: float
+        :type max_temperature: float
         :type max_voltage: float
         :type reset_tolerance: float
         :type reward_std: float
@@ -88,7 +90,7 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         """
         action_size = 1
         observation_size = 6
-        if pass_scale_interval_to_policy:
+        if scale_action and pass_scale_interval_to_policy:
             observation_size += 2
         super(RealTimeEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)
         self.action_decimal_precision = action_decimal_precision
@@ -107,6 +109,7 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         self.max_position = max_position
         self.max_linear_threshold_position = max_linear_threshold_position
         self.max_linear_threshold_voltage = max_linear_threshold_voltage
+        self.max_temperature = max_temperature
         self.max_voltage = max_voltage
         self.reset_tolerance = reset_tolerance
         self.reward_std = reward_std

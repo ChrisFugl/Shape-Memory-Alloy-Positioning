@@ -23,13 +23,14 @@ environment:
   action_digit_precision: 2
   scale_action: true
   pass_scale_interval_to_policy: true
-  reset_tolerance: 0.01
+  reset_tolerance: 0.00667
   goal_time_tolerance_s: 2
   goal_tolerance: 0.005
   goal_position: 0.05
   max_position: 0.09
   max_linear_threshold_position: 0.07
   max_linear_threshold_voltage: 7.0
+  max_temperature: 125.0
   max_voltage: 12.0
   reward_std: 0.005
   reward_trunc_min: 0.03
