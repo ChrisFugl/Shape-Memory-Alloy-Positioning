@@ -87,7 +87,7 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type reward_trunc_max: float
         """
         action_size = 1
-        observation_size = 3
+        observation_size = 6
         if pass_scale_interval_to_policy:
             observation_size += 2
         super(RealTimeEnvironmentConfig, self).__init__(observation_size=observation_size, action_size=action_size)

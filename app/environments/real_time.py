@@ -186,7 +186,7 @@ class RealTimeEnvironment(Environment):
         distance_next = abs(p_next - self._goal_position)
         velocity = (distance - distance_next) / next_time
         similarity = self._reward_goal_similarity(next_state)
-        return velocity + similarity
+        return velocity, similarity, velocity + similarity
 
     def _reward_goal_similarity(self, state):
         position = state[2]
@@ -224,11 +224,12 @@ class RealTimeEnvironment(Environment):
             self._enter_goal_time = next_state_time
         elif self._enter_goal_time is not None and not self.is_in_goal(next_position):
             self._enter_goal_time = None
-        reward = self.reward(self._state, action, next_state)
+        velocity, similarity, reward = self.reward(self._state, action, next_state)
         terminal = self.is_terminal_state(next_state, next_state_time)
+        info = {'velocity': velocity, 'similarity': similarity}
         self._state = next_state
         self._state_timestep = next_state_time
-        return next_state, reward, terminal, {}
+        return next_state, reward, terminal, info
 
     def get_scaled_action(self, position, action):
         min, max = self.get_action_interval(position)
