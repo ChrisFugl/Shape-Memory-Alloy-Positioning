@@ -2,6 +2,7 @@ from app.environments.environment import Environment
 from gym import spaces
 from math import exp
 import numpy as np
+import random
 from scipy import stats
 import socket
 import struct
@@ -56,11 +57,18 @@ class RealTimeEnvironment(Environment):
         self._goal_position = config.goal_position
         self._next_state_wait_time = config.next_state_wait_time
         self._values_per_observation = config.values_per_observation
-        self._goal_tolerance = config.goal_tolerance
-        self._goal_time_tolerance_s = config.goal_time_tolerance_s
         self._reset_tolerance = config.reset_tolerance
 
+        # goal variables
+        self._goal_type = config.goal_type
+        self._goal_start_position = config.goal_position
+        self._goal_min = config.goal_min
+        self._goal_max = config.goal_max
+        self._goal_tolerance = config.goal_tolerance
+        self._goal_time_tolerance_s = config.goal_time_tolerance_s
+
         self._enter_goal_time = None
+        self._goal_position = None
         self._state = None
         self._state_timestep = None
 
@@ -115,6 +123,12 @@ class RealTimeEnvironment(Environment):
         observation_high = np.array(observation_high)
         return spaces.Box(low=observation_low, high=observation_high, dtype=np.float)
 
+    def _get_goal_position(self):
+        if self._goal_type == 'static':
+            return self._goal_start_position
+        else:
+            return random.uniform(self._goal_min, self._goal_max)
+
     def is_in_goal(self, position):
         return abs(position - self._goal_position) < self._goal_tolerance
 
@@ -163,6 +177,7 @@ class RealTimeEnvironment(Environment):
 
     def reset(self):
         self._enter_goal_time = None
+        self._goal_position = self._get_goal_position()
         self._state = None
         self._state_timestep = None
         # wait for the spring to be close to the start position before starting a new trajectory

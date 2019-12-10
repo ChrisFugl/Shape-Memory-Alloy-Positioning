@@ -50,6 +50,9 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         port_read,
         port_write,
         values_per_observation,
+        goal_type,
+        goal_min,
+        goal_max,
         goal_tolerance=0.01,
         goal_time_tolerance_s=2.0,
         scale_action=True,
@@ -74,6 +77,9 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         :type port_read: int
         :type port_write: int
         :type values_per_observation: int
+        :type goal_type: str
+        :type goal_min: float
+        :type goal_max: float
         :type goal_tolerance: float
         :type goal_time_tolerance_s: float
         :type scale_action: bool
@@ -96,12 +102,15 @@ class RealTimeEnvironmentConfig(EnvironmentConfig):
         self.action_decimal_precision = action_decimal_precision
         self.action_digit_precision = action_digit_precision
         self.bytes_per_value = bytes_per_value
-        self.goal_position = goal_position
         self.host = host
         self.next_state_wait_time = next_state_wait_time
         self.port_read = port_read
         self.port_write = port_write
         self.values_per_observation = values_per_observation
+        self.goal_type = goal_type
+        self.goal_min = goal_min
+        self.goal_max = goal_max
+        self.goal_position = goal_position
         self.goal_tolerance = goal_tolerance
         self.goal_time_tolerance_s = goal_time_tolerance_s
         self.scale_action = scale_action

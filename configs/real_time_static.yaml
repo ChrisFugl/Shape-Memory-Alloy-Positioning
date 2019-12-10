@@ -1,0 +1,56 @@
+batch_size: 256
+checkpoint_dir: E:\SMA
+collect_actions: true
+collect_actions_every: 60
+exploration_steps: 256
+evaluation_steps: 128
+gradient_steps: 128
+max_trajectory_length: 128
+iterations: -1
+max_buffer_size: 1000000
+min_num_steps_before_training: 0
+save_checkpoint_interval_s: 1800
+save_model: saved_models/real_time/
+environment:
+  type: real_time
+  host: localhost
+  port_read: 6340
+  port_write: 6340
+  bytes_per_value: 9
+  next_state_wait_time: null
+  values_per_observation: 10
+  action_decimal_precision: 4
+  action_digit_precision: 2
+  scale_action: true
+  pass_scale_interval_to_policy: true
+  reset_tolerance: 0.00667
+  goal_type: static
+  goal_min: 0.02
+  goal_max: 0.07
+  goal_position: 0.05
+  goal_time_tolerance_s: 2
+  goal_tolerance: 0.005
+  max_position: 0.09
+  max_linear_threshold_position: 0.07
+  max_linear_threshold_voltage: 7.0
+  max_temperature: 125.0
+  max_voltage: 12.0
+  reward_std: 0.005
+  reward_trunc_min: 0.03
+  reward_trunc_max: 0.07
+model:
+  discount_factor: 0.99
+  exponential_weight: 0.005
+  learning_rate_policy: 0.0003
+  learning_rate_q: 0.0003
+  network:
+    hidden_size: 32
+    number_of_hidden_layers: 3
+  reward_scale: 3.0
+  target_update_period: 1
+  use_automatic_entropy_tuning: true
+policy:
+  type: tanh_gaussian
+  network:
+    hidden_size: 32
+    number_of_hidden_layers: 3

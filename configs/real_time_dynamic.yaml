@@ -10,7 +10,7 @@ iterations: -1
 max_buffer_size: 1000000
 min_num_steps_before_training: 0
 save_checkpoint_interval_s: 1800
-save_model: saved_models/real_time/
+save_model: saved_models/real_time_dynamic/
 environment:
   type: real_time
   host: localhost
@@ -24,9 +24,12 @@ environment:
   scale_action: true
   pass_scale_interval_to_policy: true
   reset_tolerance: 0.00667
+  goal_type: dynamic
+  goal_min: 0.02
+  goal_max: 0.07
+  goal_position: 0.05
   goal_time_tolerance_s: 2
   goal_tolerance: 0.005
-  goal_position: 0.05
   max_position: 0.09
   max_linear_threshold_position: 0.07
   max_linear_threshold_voltage: 7.0
