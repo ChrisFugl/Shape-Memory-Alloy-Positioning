@@ -49,7 +49,7 @@ environment_real_time:
   goal_tolerance: num(min=0, required=True)
   goal_time_tolerance_s: num(min=0, required=True)
   goal_min: num(min=0, required=True)
-  goal_max: num(max=0, required=True)
+  goal_max: num(min=0, required=True)
   goal_position: num(min=0, required=True)
   pass_scale_interval_to_policy: bool(required=False)
   scale_action: bool(required=False)
