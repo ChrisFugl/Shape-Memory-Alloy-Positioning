@@ -67,12 +67,18 @@ class RealTimeEnvironment(Environment):
         self._goal_tolerance = config.goal_tolerance
         self._goal_time_tolerance_s = config.goal_time_tolerance_s
 
+        # reward variables
+        self._reward_trunc_min = config.reward_trunc_min
+        self._reward_trunc_max = config.reward_trunc_max
+        self._reward_std = config.reward_std
+        self._reward_gaussian = None
+        self._reward_gaussian_max = None
+
         self._enter_goal_time = None
         self._goal_position = None
         self._state = None
         self._state_timestep = None
 
-        self._setup_reward_function(config)
         self._setup_action_scaling(config)
         self._setup_connections(config)
         self.action_space = self._get_action_space(config)
@@ -89,12 +95,6 @@ class RealTimeEnvironment(Environment):
             else:
                 reader = self.create_connection(config.host, config.port_read)
                 writer = self.create_connection(config.host, config.port_write)
-
-    def _setup_reward_function(self, config):
-        self._reward_trunc_min = config.reward_trunc_min
-        self._reward_trunc_max = config.reward_trunc_max
-        self._reward_gaussian = stats.norm(loc=config.goal_position, scale=config.reward_std)
-        self._reward_gaussian_max = self._reward_gaussian.pdf(config.goal_position)
 
     def _setup_action_scaling(self, config):
         self._scale_action = config.scale_action
@@ -128,6 +128,10 @@ class RealTimeEnvironment(Environment):
             return self._goal_start_position
         else:
             return random.uniform(self._goal_min, self._goal_max)
+
+    def _setup_reward_function(self):
+        self._reward_gaussian = stats.norm(loc=self._goal_position, scale=self._reward_std)
+        self._reward_gaussian_max = self._reward_gaussian.pdf(self._goal_position)
 
     def is_in_goal(self, position):
         return abs(position - self._goal_position) < self._goal_tolerance
@@ -178,6 +182,7 @@ class RealTimeEnvironment(Environment):
     def reset(self):
         self._enter_goal_time = None
         self._goal_position = self._get_goal_position()
+        self._setup_reward_function()
         self._state = None
         self._state_timestep = None
         # wait for the spring to be close to the start position before starting a new trajectory
