@@ -53,17 +53,10 @@ deactivate
 Two main scripts can be used to train and test the model. Use the configuration files in *config/* to specify how to configure the model, environment, and more. For example:
 
 ``` sh
-python train_rlkit.py configs/debug.yaml
+python train.py configs/debug.yaml
 ```
 
 Note that the training can continue infinitely (or until manually stopped) by setting iterations to a negative number.
-
-## Tests
-All tests are located in the *tests* directory. Use the following command to run all tests:
-
-``` sh
-python -m unittest discover -s tests
-```
 
 ## Acknowledgement
 The implementation of Soft Actor-Critic is based of [the implementation by Vitchyr Pong](https://github.com/vitchyr/rlkit).

@@ -1,48 +1,74 @@
 from app.config import Config
 from app.environments import get_environment
-from app.model import Model
 from app.policies import get_policy
-from app.replay_buffer import ReplayBuffer
-from app.rollout import rollouts
-import numpy as np
-import os
-from torch.utils.tensorboard import SummaryWriter
 import argparse
-import torch
+import rlkit.torch.pytorch_util as ptu
+from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
+from rlkit.envs.wrappers import NormalizedBoxEnv
+from rlkit.launchers.launcher_util import setup_logger
+from rlkit.samplers.data_collector import MdpPathCollector
+from rlkit.torch.sac.policies import MakeDeterministic, TanhGaussianPolicy
+from rlkit.torch.sac.sac import SACTrainer
+from rlkit.torch.networks import FlattenMlp
+from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 import sys
-import yaml
 import yamale
+import os
+import torch
+import pickle
 
 CONFIG_SCHEMA_PATH = 'app/config/schema.yaml'
-
 
 def main():
     arguments = sys.argv[1:]
     options = parse_arguments(arguments)
     config = load_config(options.config)
-    environment = get_environment(config.environment_type, config.environment)
-    policy = get_policy(config.policy_type, config.policy, environment)
-    replay_buffer = ReplayBuffer(config.batch_size, config.max_buffer_size,
-                                 environment.observation_size,
-                                 environment.action_size)
-    model = Model(config.model, environment, policy)
-    writer = SummaryWriter(log_dir='runs/' + options.name)
-    train(model, replay_buffer, environment, config, writer)
+    load_iter = options.load
+    exploration_environment = get_environment(config.environment_type, config.environment)
+    evaluation_environment = get_environment(config.environment_type, config.environment)
+    policy = get_policy(config.policy_type, config.policy, evaluation_environment)
+    variant = dict(
+        algorithm='SAC',
+        version='normal',
+        layer_size=config.model.network.hidden_size,
+        number_of_layers=config.model.network.number_of_hidden_layers,
+        replay_buffer_size=config.max_buffer_size,
+        algorithm_kwargs=dict(
+            batch_size=config.batch_size,
+            collect_actions=config.collect_actions,
+            collect_actions_every=config.collect_actions_every,
+            num_epochs=config.iterations,
+            num_eval_steps_per_epoch=config.evaluation_steps,
+            num_trains_per_train_loop=config.gradient_steps,
+            num_expl_steps_per_train_loop=config.exploration_steps,
+            min_num_steps_before_training=config.min_num_steps_before_training,
+            max_path_length=config.max_trajectory_length,
+            save_checkpoint_interval_s=config.save_checkpoint_interval_s,
+        ),
+        trainer_kwargs=dict(
+            discount=config.model.discount_factor,
+            soft_target_tau=config.model.exponential_weight,
+            target_update_period=config.model.target_update_period,
+            policy_lr=config.model.learning_rate_policy,
+            qf_lr=config.model.learning_rate_q,
+            reward_scale=config.model.reward_scale,
+            use_automatic_entropy_tuning=config.model.use_automatic_entropy_tuning,
+        ),
+    )
+    setup_logger(options.name, variant=variant, tensorboard_log_dir=f'runs/{options.name}')
+    # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
 
-    # save trained model
-    if config.save_model is not None:
-        os.makedirs(config.save_model, exist_ok=True)
-        model.save(config.save_model)
+    ckp_path = os.path.join(config.checkpoint_dir, options.name)
+    os.makedirs(ckp_path, exist_ok=True)
+
+    experiment(variant, exploration_environment, evaluation_environment, policy, ckp_path, load_iter)
 
 
 def parse_arguments(arguments):
     parser = argparse.ArgumentParser()
     parser.add_argument('config', type=str, help='path to config file')
-    parser.add_argument(
-        '-name',
-        type=str,
-        default='baseline',
-        help='name of experiment, it is used for tensorboard logging')
+    parser.add_argument('--load', default=None, required=False, type=str, help='data from given iteration will be loaded')
+    parser.add_argument('--name', type=str, default='baseline', help='name of experiment, it is used for tensorboard logging')
     options = parser.parse_args(arguments)
     return options
 
@@ -55,91 +81,61 @@ def load_config(config_path):
     return config
 
 
-def train(model, replay_buffer, environment, config, writer):
-    """
-    Trains the model according to the configuration and environment.
+def experiment(variant, expl_env, eval_env, policy, checkpoint_dir, load_iter):
+    print(f'Environment: {expl_env.name}')
+    print(f'Policy: {policy.name}')
 
-    :type model: app.model.Model
-    :type replay_buffer: app.replay_buffer.ReplayBuffer
-    :type environment: app.environments.environment.Environment
-    :type config: app.config.Config
-    :type writer: torch.utils.tensorboard.SummaryWriter
-    """
-    for iteration in range(config.iterations):
-        validate = iteration % 100 == 0
+    expl_env = NormalizedBoxEnv(expl_env)
+    eval_env = NormalizedBoxEnv(eval_env)
+    obs_dim = expl_env.observation_space.low.size
+    action_dim = eval_env.action_space.low.size
 
-        # explore environment
-        model.eval_mode()
-        trajectories = rollouts(
-            environment,
-            model.policy,
-            config.environment_steps,
-            max_trajectory_length=config.max_trajectory_length)
-        replay_buffer.add_trajectories(trajectories)
+    if load_iter is not None:
+        load_dir = os.path.join(checkpoint_dir, 'iteration_' + load_iter)
+        model_checkpoint = torch.load(os.path.join(load_dir, 'model.pt'))
+        with open(os.path.join(load_dir, 'replay_buffer.pkl'), 'rb') as f:
+            attr_dict = pickle.load(f)
+        start_epoch = attr_dict['iteration'] + 1
+    else:
+        model_checkpoint = None
+        attr_dict = None
+        start_epoch = 0
 
-        # statistics to log to tensorboard
-        policy_loss_sum = 0
-        q1_loss_sum = 0
-        q2_loss_sum = 0
-        alpha_loss_sum = 0
-        if config.environment_type == 'debug':
-            last_5_distance_to_goal_sum = 0
-            distance_to_goal_sum = 0
-        reward_sum = 0
-        observation_count = 0
-        for trajectory in trajectories:
-            if config.environment_type == 'debug':
-                last_5_distance_to_goal_sum += np.abs(trajectory.observations[-5:, 0] - trajectory.observations[-5:, 1]).sum()
-                distance_to_goal_sum += np.abs(trajectory.observations[:, 0] - trajectory.observations[:, 1]).sum()
-            reward_sum += trajectory.rewards.sum()
-            observation_count += len(trajectory.rewards)
-        if config.environment_type == 'debug':
-            last_5_distance_to_goal_average = last_5_distance_to_goal_sum / observation_count
-            distance_to_goal_average = distance_to_goal_sum / observation_count
-        reward_average = reward_sum / observation_count
-        if validate:
-            actions = np.empty((0, environment.action_size))
-
-        # train model
-        model.train_mode()
-        for gradient_step in range(config.gradient_steps):
-            batch_numpy = replay_buffer.random_batch()
-            policy_loss, q1_loss, q2_loss, alpha_loss = model.train_batch(
-                observations=torch.from_numpy(
-                    batch_numpy.observations).float(),
-                next_observations=torch.from_numpy(
-                    batch_numpy.next_observations).float(),
-                actions=torch.from_numpy(batch_numpy.actions).float(),
-                rewards=torch.from_numpy(batch_numpy.rewards).float(),
-                terminals=torch.from_numpy(batch_numpy.terminals).float())
-            # update statistics
-            policy_loss_sum += policy_loss
-            q1_loss_sum += q1_loss
-            q2_loss_sum += q2_loss
-            alpha_loss_sum += alpha_loss
-            if validate:
-                actions = np.concatenate((actions, batch_numpy.actions), axis=0)
-
-        # averages
-        policy_loss_average = policy_loss_sum / config.gradient_steps
-        q1_loss_average = q1_loss_sum / config.gradient_steps
-        q2_loss_average = q2_loss_sum / config.gradient_steps
-        alpha_loss_average = alpha_loss_sum / config.gradient_steps
-
-        # write to tensorboard
-        writer.add_scalar('loss/policy', policy_loss_average, iteration)
-        writer.add_scalar('loss/q1', q1_loss_average, iteration)
-        writer.add_scalar('loss/q2', q2_loss_average, iteration)
-        writer.add_scalar('loss/alpha', alpha_loss_average, iteration)
-        if config.environment_type == 'debug':
-            writer.add_scalar('metrics/distance_to_goal', distance_to_goal_average, iteration)
-            writer.add_scalar('metrics/last_5_distance_to_goal', last_5_distance_to_goal_average, iteration)
-        writer.add_scalar('metrics/reward', reward_average, iteration)
-
-        if validate:
-            writer.add_histogram('actions', actions, iteration)
-            print(f'Iteration: {iteration} / {config.iterations}')
-
+    layer_size = variant['layer_size']
+    number_of_layers = variant['number_of_layers']
+    hidden_sizes = [layer_size] * number_of_layers
+    q_input_size = obs_dim + action_dim
+    q_output_size = 1
+    qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    target_qf1 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    target_qf2 = FlattenMlp(input_size=q_input_size, output_size=q_output_size, hidden_sizes=hidden_sizes)
+    eval_policy = MakeDeterministic(policy)
+    eval_path_collector = MdpPathCollector(eval_env, eval_policy)
+    expl_path_collector = MdpPathCollector(expl_env, policy)
+    replay_buffer = EnvReplayBuffer(variant['replay_buffer_size'], expl_env, attr_dict)
+    trainer = SACTrainer(
+        env=eval_env,
+        policy=policy,
+        qf1=qf1,
+        qf2=qf2,
+        target_qf1=target_qf1,
+        target_qf2=target_qf2,
+        checkpoint=model_checkpoint,
+        **variant['trainer_kwargs']
+    )
+    algorithm = TorchBatchRLAlgorithm(
+        trainer=trainer,
+        exploration_env=expl_env,
+        evaluation_env=eval_env,
+        exploration_data_collector=expl_path_collector,
+        evaluation_data_collector=eval_path_collector,
+        replay_buffer=replay_buffer,
+        save_dir=checkpoint_dir,
+        **variant['algorithm_kwargs']
+    )
+    algorithm.to(ptu.device)
+    algorithm.train(start_epoch=start_epoch)
 
 if __name__ == '__main__':
     main()
