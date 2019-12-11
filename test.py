@@ -28,7 +28,7 @@ def main():
     policy = MakeDeterministic(policy)
     result_directory = os.path.join('results', options.name)
     os.makedirs(result_directory, exist_ok=True)
-    evaluate(environment, policy, result_directory, config, options)
+    evaluate(environment, policy, result_directory  , options)
     save_options(options)
 
 
@@ -52,7 +52,7 @@ def load_config(config_path):
     return config
 
 
-def evaluate(environment, policy, result_directory, environment):
+def evaluate(environment, policy, result_directory, options):
     for goal in options.goals:
         goal_directory = os.path.join(result_directory, f'goal_{goal}')
         os.makedirs(goal_directory, exist_ok=True)
@@ -69,23 +69,6 @@ def make_environment(config, options):
     environment = get_environment(config.environment_type, environment_config)
     environment = NormalizedBoxEnv(environment)
     return environment
-
-
-TRAJECTORY_DTYPES = [
-    np.int,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.float,
-    np.bool,
-]
 
 
 TRAJECTORY_COLUMNS = [
@@ -106,22 +89,16 @@ TRAJECTORY_COLUMNS = [
 
 
 def rollout(environment, agent, options):
-    dataframe = pd.DataFrame([], columns=TRAJECTORY_COLUMNS, dtype=TRAJECTORY_DTYPES)
-
-    o = env.reset()
-    # wait two seconds in between each new trajectory as to make sure
-    # that the SMA will start in stable states
-    time.sleep(2)
-    # reset again to reset the timestamps in the environment
-    o = env.reset()
+    data = []
+    o = environment.reset()
     agent.reset()
     reset_timestamp = time.time()
     time_since_reset = 0.0
     next_o = None
     for timestep in range(1, options.trajectory_length + 1):
         a, agent_info = agent.get_action(o)
-        next_o, r, d, env_info = env.step(a)
-        dataframe.loc[timestep - 1] = [
+        next_o, r, d, env_info = environment.step(a)
+        data.append([
             timestep,
             time_since_reset,
             o[4], # time since last step
@@ -129,17 +106,18 @@ def rollout(environment, agent, options):
             o[0], # temperature
             o[6], # voltage min
             o[7], # voltage max
-            env_info['action_before_scaling'],
-            a,
+            a[0],
+            env_info['action_scaled'],
             env_info['velocity'],
             env_info['similarity'],
             r,
             d,
-        ]
+        ])
         if d:
             break
         time_since_reset = time.time() - reset_timestamp
         o = next_o
+    dataframe = pd.DataFrame(data, columns=TRAJECTORY_COLUMNS)
     return dataframe
 
 

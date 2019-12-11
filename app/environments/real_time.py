@@ -230,7 +230,6 @@ class RealTimeEnvironment(Environment):
         :param action: action performed in current environment
         :return: (next state, reward)
         """
-        action_before_scaling = action
         if self._scale_action:
             action = self.get_scaled_action(self._state, action)
         self.send_action(action[0])
@@ -247,7 +246,7 @@ class RealTimeEnvironment(Environment):
             self._enter_goal_time = None
         velocity, similarity, reward = self.reward(self._state, action, next_state)
         terminal = self.is_terminal_state(next_state, next_state_time)
-        info = {'action_before_scaling': action_before_scaling, 'velocity': velocity, 'similarity': similarity}
+        info = {'action_scaled': action[0], 'velocity': velocity, 'similarity': similarity}
         self._state = next_state
         self._state_timestep = next_state_time
         return next_state, reward, terminal, info
